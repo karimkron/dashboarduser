@@ -101,10 +101,10 @@ const ServicesPage = () => {
       const currentScrollY = window.scrollY;
 
       if (currentScrollY > lastScrollY) {
-        // Scroll hacia abajo: ocultar categorías y search bar
+        // Scroll hacia abajo: reducir la altura de la Hero Section
         setIsVisible(false);
       } else {
-        // Scroll hacia arriba: mostrar categorías y search bar
+        // Scroll hacia arriba: restaurar la altura de la Hero Section
         setIsVisible(true);
       }
 
@@ -126,23 +126,8 @@ const ServicesPage = () => {
   }
 
   return (
-    <div className="overflow-hidden"> {/* Evitar el rebote del scroll en móviles */}
-      {/* Hero Section */}
-      {!isSearchFocused && (
-        <div className={`bg-gradient-to-r from-gray-900 to-amber-900 border-b transition-all duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-          <div className="max-w-7xl mx-auto p-2">
-            <div className="text-center py-6">
-              <h1 className="text-2xl md:text-4xl font-bold text-white mb-4">
-                Nuestros Servicios
-              </h1>
-              <p className="text-gray-300 max-w-2xl text-sm md:text-xl mx-auto">
-                Descubre nuestra amplia gama de servicios profesionales diseñados para realzar tu estilo personal
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
+    <div className="overflow-hidden">
+      
       {/* Filters Section */}
       <div className={`bg-white border-b sticky top-0 z-10 transition-all duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="max-w-max mx-auto p-2">
