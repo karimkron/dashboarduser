@@ -1,45 +1,54 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Clock, Euro, Search, RefreshCw } from 'lucide-react';
-import api from '../../services/api'; // Importa la instancia de la API
+import api from '../../services/api';
 
 interface Service {
-  _id: string; // Cambiado a _id para coincidir con MongoDB
+  _id: string;
   name: string;
   description: string;
   price: number;
-  duration: number; // Cambiado a number para coincidir con el backend
+  duration: number;
   category: string;
   image: string;
-  points: number; // Puntos de recompensa
+  points: number;
 }
 
 const ServicesPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [services, setServices] = useState<Service[]>([]); // Estado para almacenar los servicios
-  const [loading, setLoading] = useState(true); // Estado para manejar la carga
-  const [error, setError] = useState(''); // Estado para manejar errores
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]); // Estado para las categorías
-  const [isSearchFocused, setIsSearchFocused] = useState(false); // Estado para manejar el foco en el input de búsqueda
-  const [isRefreshing, setIsRefreshing] = useState(false); // Estado para la animación del botón de actualización
-  const [isVisible, setIsVisible] = useState(true); // Estado para controlar la visibilidad de las categorías y el search bar
-  const [lastScrollY, setLastScrollY] = useState(0); // Estado para almacenar la última posición del scroll
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  // Estado para controlar la visibilidad de la sección de filtros
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Referencia al contenedor de scroll
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastScrollYRef = useRef(0);
+  const scrollThreshold = 10; // umbral para evitar cambios muy bruscos
+
+  // Desactivar el rebote globalmente (por si acaso)
+  useEffect(() => {
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.overscrollBehavior = 'none';
+    return () => {
+      document.documentElement.style.overscrollBehavior = '';
+      document.body.style.overscrollBehavior = '';
+    };
+  }, []);
 
   // Función para obtener los servicios desde la API o localStorage
   const fetchServices = async () => {
     try {
-      const response = await api.get<Service[]>('/api/services'); // Tipar la respuesta como Service[]
+      const response = await api.get<Service[]>('/api/services');
       const servicesData = response.data;
-
-      // Obtener categorías únicas de los servicios
       const uniqueCategories = Array.from(new Set(servicesData.map(service => service.category)))
         .map(category => ({ id: category, name: category }));
-
-      // Guardar servicios y categorías en localStorage
       localStorage.setItem('services', JSON.stringify(servicesData));
       localStorage.setItem('categories', JSON.stringify(uniqueCategories));
-
-      // Actualizar el estado
       setServices(servicesData);
       setCategories([{ id: 'all', name: 'Todos' }, ...uniqueCategories]);
       setLoading(false);
@@ -54,117 +63,121 @@ const ServicesPage = () => {
   useEffect(() => {
     const storedServices = localStorage.getItem('services');
     const storedCategories = localStorage.getItem('categories');
-
     if (storedServices && storedCategories) {
-      // Si los servicios y categorías están en localStorage, usarlos
       setServices(JSON.parse(storedServices));
       setCategories(JSON.parse(storedCategories));
       setLoading(false);
     } else {
-      // Si no están en localStorage, hacer la solicitud a la API
       fetchServices();
     }
   }, []);
 
-  // Actualizar servicios cuando el componente se monta o cuando el usuario sale y vuelve
+  // Actualizar servicios al volver a la pestaña
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchServices(); // Actualizar servicios cuando la página vuelve a estar visible
-      }
+      if (document.visibilityState === 'visible') fetchServices();
     };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  // Función para manejar la actualización de servicios
   const handleRefresh = async () => {
-    setIsRefreshing(true); // Activar la animación
-    await fetchServices(); // Actualizar servicios
-    setIsRefreshing(false); // Desactivar la animación
+    setIsRefreshing(true);
+    await fetchServices();
+    setIsRefreshing(false);
   };
 
-  // Filtrar servicios según la categoría seleccionada y la búsqueda
   const filteredServices = services.filter(service =>
     (selectedCategory === 'all' || service.category === selectedCategory) &&
     service.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Efecto para manejar el scroll
+  // Escuchar el scroll en el contenedor de scroll
   useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
     const handleScroll = () => {
-      if (isSearchFocused) return; // No hacer nada si el buscador está enfocado
-
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY > lastScrollY) {
-        // Scroll hacia abajo: reducir la altura de la Hero Section
+      if (isSearchFocused) return;
+      const currentScrollY = container.scrollTop;
+      if (currentScrollY > lastScrollYRef.current + scrollThreshold) {
+        // Scroll hacia abajo: ocultar la sección de filtros
         setIsVisible(false);
-      } else {
-        // Scroll hacia arriba: restaurar la altura de la Hero Section
+      } else if (currentScrollY < lastScrollYRef.current - scrollThreshold) {
+        // Scroll hacia arriba: mostrar la sección de filtros
         setIsVisible(true);
       }
-
-      setLastScrollY(currentScrollY); // Actualizar la última posición del scroll
+      lastScrollYRef.current = currentScrollY;
     };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [lastScrollY, isSearchFocused]);
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [isSearchFocused]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Cargando servicios...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Cargando servicios...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-500">
+        {error}
+      </div>
+    );
   }
 
   return (
-    <div className="sticky top-0 z-10">
-      
-      {/* Filters Section */}
-      <div className={`bg-white border-b sticky top-0 z-10 transition-all duration-300 overscroll-none ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
-        <div className="max-w-max mx-auto p-2">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            {/* Search Bar */}
-            <div className="relative w-full md:w-96 ">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar servicios..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-              />
+    // Contenedor personalizado de scroll
+    <div
+      ref={containerRef}
+      style={{
+        overflowY: 'scroll',
+        height: '100vh',
+        overscrollBehavior: 'none',
+        scrollBehavior: 'smooth'
+      }}
+    >
+      {/* Dejar espacio para el header fijo */}
+      <div className="mt-16">
+        {/* Sección de filtros: ahora con posición fixed para poder ocultarla */}
+        <div
+          className={`bg-white border-b fixed left-0 right-0 z-40 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
+          style={{ top: '64px' }} // justo debajo del header (header: 64px de alto)
+        >
+          <div className="max-w-max mx-auto p-2">
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+              {/* Search Bar */}
+              <div className="relative w-full md:w-96">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar servicios..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
             </div>
-          </div>
-
-          {/* Categories (oculto en móviles cuando el input está enfocado) */}
-          {!isSearchFocused && (
-            <div className="flex overflow-x-auto sticky top-0 z-10 gap-2 pb-2 md:pb-0 w-full md:w-auto mt-4">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 py-2 text-sm md:text-base rounded-full whitespace-nowrap transition-colors
-                    ${selectedCategory === category.id
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            {/* Categorías (oculto en móviles cuando el input está enfocado) */}
+            {!isSearchFocused && (
+              <div className="flex overflow-x-auto gap-2 pb-2 md:pb-0 w-full md:w-auto mt-4">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`px-4 py-2 text-sm md:text-base rounded-full whitespace-nowrap transition-colors ${
+                      selectedCategory === category.id
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-              {/* Botón de actualización */}
-              {!isSearchFocused && (
+                  >
+                    {category.name}
+                  </button>
+                ))}
                 <button
                   onClick={handleRefresh}
                   className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -172,56 +185,61 @@ const ServicesPage = () => {
                   <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                   <span className="hidden md:inline">Actualizar</span>
                 </button>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Services Grid */}
-      <div className={`max-w-7xl mx-auto p-2 transition-all duration-300 ${isVisible ? 'mt-0' : 'mt-[-100px]'}`}>
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2">
-          {filteredServices.map((service) => (
-            <div
-              key={service._id} // Usar _id como clave única
-              className="bg-white border rounded-lg overflow-hidden hover:border-amber-600 transition-colors"
-            >
-              <div className="aspect-video relative">
-                <img
-                  src={service.image || 'https://placehold.co/300x200'} // Usar una URL de respaldo que funcione
-                  alt={service.name}
-                  className="w-full h-full object-cover"
-                />
               </div>
+            )}
+          </div>
+        </div>
 
-              <div className="p-6">
-                <h3 className="text-xs md:text-xl font-semibold text-gray-900 mb-2">
-                  {service.name}
-                </h3>
-                <p className="text-gray-600 mb-2 text-[10px] md:text-xl">{service.description}</p>
-
-                <div className="flex items-center gap-1 mb-2">
-                  <div className="flex items-center gap-1 md:gap-4 text-[10px] md:text-base">
-                    <Clock className="h-5 w-5 text-gray-400" />
-                    <span className="text-gray-600">{service.duration} min</span>
-                  </div>
-                  <div className="flex items-center gap-1 md:gap-4 text-[10px] md:text-base">
-                    <Euro className="h-5 w-5 text-gray-400" />
-                    <span className="text-gray-600">€{service.price}</span>
-                  </div>
+        {/* Contenedor de servicios:
+            Cuando la sección de filtros está visible, se deja espacio para header (64px) + filtros (asumamos 80px),
+            y cuando está oculta, solo se deja espacio para el header */}
+        <div
+          className={`max-w-7xl mx-auto p-2 transition-all duration-300 ${
+            isVisible ? 'mt-[190px]' : 'mt-16'
+          }`}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {filteredServices.map((service) => (
+              <div
+                key={service._id}
+                className="bg-white border rounded-lg overflow-hidden hover:border-amber-600 transition-colors"
+              >
+                <div className="aspect-video relative">
+                  <img
+                    src={service.image || 'https://placehold.co/300x200'}
+                    alt={service.name}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <div className="flex items-center pb-2 gap-1 md:gap-4 text-[10px] md:text-base">
+                <div className="p-6">
+                  <h3 className="text-xs md:text-xl font-semibold text-gray-900 mb-2">
+                    {service.name}
+                  </h3>
+                  <p className="text-gray-600 mb-2 text-[10px] md:text-xl">
+                    {service.description}
+                  </p>
+                  <div className="flex items-center gap-1 mb-2">
+                    <div className="flex items-center gap-1 md:gap-4 text-[10px] md:text-base">
+                      <Clock className="h-5 w-5 text-gray-400" />
+                      <span className="text-gray-600">{service.duration} min</span>
+                    </div>
+                    <div className="flex items-center gap-1 md:gap-4 text-[10px] md:text-base">
+                      <Euro className="h-5 w-5 text-gray-400" />
+                      <span className="text-gray-600">€{service.price}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center pb-2 gap-1 md:gap-4 text-[10px] md:text-base">
                     <span className="text-green-500">Puntos: {service.points}</span>
                   </div>
-                <button
-                  className="w-full bg-amber-600 text-[10px] md:text-xl text-white px-2 py-1 md:px-4 md:py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
-                >
-                  Reservar
-                </button>
-                
+                  <button
+                    className="w-full bg-amber-600 text-[10px] md:text-xl text-white px-2 py-1 md:px-4 md:py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  >
+                    Reservar
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

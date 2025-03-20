@@ -15,7 +15,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className={`fixed left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 
+    <aside className={`fixed z-50 left-0 top-0 h-screen bg-white shadow-lg transition-all duration-300 
       ${isSidebarOpen ? 'w-64' : 'w-20'} hidden lg:block`}>
       <div className="flex h-16 items-center justify-between border-b px-4">
         <h1 className={`font-bold text-gray-800 transition-all ${isSidebarOpen ? 'text-xl' : 'text-sm'}`}>

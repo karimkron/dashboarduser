@@ -7,7 +7,7 @@ const Header = () => {
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
 
   return (
-    <header className="h-16 border-b bg-white px-6 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 h-16 border-b bg-white px-6 shadow-sm z-40">
       <div className="flex h-full items-center justify-between">
         <button
           onClick={toggleSidebar}
