@@ -96,13 +96,15 @@ const ServicesPage = () => {
   // Efecto para manejar el scroll
   useEffect(() => {
     const handleScroll = () => {
+      if (isSearchFocused) return; // No hacer nada si el buscador está enfocado
+
       const currentScrollY = window.scrollY;
 
       if (currentScrollY > lastScrollY) {
-        // Scroll hacia abajo: ocultar categorías y search bar
+        // Scroll hacia abajo: ocultar Hero Section, categorías y search bar
         setIsVisible(false);
       } else {
-        // Scroll hacia arriba: mostrar categorías y search bar
+        // Scroll hacia arriba: mostrar Hero Section, categorías y search bar
         setIsVisible(true);
       }
 
@@ -113,7 +115,7 @@ const ServicesPage = () => {
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [lastScrollY]);
+  }, [lastScrollY, isSearchFocused]);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Cargando servicios...</div>;
@@ -127,13 +129,13 @@ const ServicesPage = () => {
     <div className="">
       {/* Hero Section */}
       {!isSearchFocused && (
-        <div className="bg-gradient-to-r from-gray-900 to-amber-900 border-b">
+        <div className={`bg-gradient-to-r from-gray-900 to-amber-900 border-b transition-all duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
           <div className="max-w-7xl mx-auto p-2">
             <div className="text-center py-6">
-              <h1 className="text-4xl font-bold text-white mb-4">
+              <h1 className="text-2xl md:text-4xl font-bold text-white mb-4">
                 Nuestros Servicios
               </h1>
-              <p className="text-gray-300 max-w-2xl mx-auto">
+              <p className="text-gray-300 max-w-2xl text-sm md:text-xl mx-auto">
                 Descubre nuestra amplia gama de servicios profesionales diseñados para realzar tu estilo personal
               </p>
             </div>
@@ -142,7 +144,7 @@ const ServicesPage = () => {
       )}
 
       {/* Filters Section */}
-      <div className={`bg-white border-b sticky top-0 z-10 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`bg-white border-b sticky top-0 z-10 transition-all duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="max-w-max mx-auto p-2">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search Bar */}
@@ -167,7 +169,7 @@ const ServicesPage = () => {
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors
+                  className={`px-4 py-2 text-sm md:text-base rounded-full whitespace-nowrap transition-colors
                     ${selectedCategory === category.id
                       ? 'bg-amber-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -192,7 +194,7 @@ const ServicesPage = () => {
       </div>
 
       {/* Services Grid */}
-      <div className="max-w-7xl mx-auto p-2">
+      <div className={`max-w-7xl mx-auto p-2 transition-all duration-300 ${isVisible ? 'mt-0' : 'mt-[-100px]'}`}>
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {filteredServices.map((service) => (
             <div
@@ -208,30 +210,31 @@ const ServicesPage = () => {
               </div>
 
               <div className="p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xs md:text-xl font-semibold text-gray-900 mb-2">
                   {service.name}
                 </h3>
-                <p className="text-gray-600 mb-4">{service.description}</p>
+                <p className="text-gray-600 mb-2 text-[10px] md:text-xl">{service.description}</p>
 
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 mb-2">
+                  <div className="flex items-center gap-1 md:gap-4 text-[10px] md:text-base">
                     <Clock className="h-5 w-5 text-gray-400" />
                     <span className="text-gray-600">{service.duration} min</span> {/* Mostrar duración en minutos */}
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 md:gap-4 text-[10px] md:text-base">
                     <DollarSign className="h-5 w-5 text-gray-400" />
                     <span className="text-gray-600">${service.price}</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  
+                </div>
+                <div className="flex items-center pb-2 gap-1 md:gap-4 text-[10px] md:text-base">
                     <span className="text-green-500">Puntos: {service.points}</span> {/* Mostrar puntos de recompensa en verde */}
                   </div>
-                </div>
-
                 <button
-                  className="w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full bg-amber-600 text-[10px] md:text-xl text-white px-2 py-1 md:px-4 md:py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 >
                   Reservar
                 </button>
+                
               </div>
             </div>
           ))}
