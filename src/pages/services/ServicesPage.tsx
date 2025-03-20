@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, DollarSign, Search, RefreshCw } from 'lucide-react';
+import { Clock, Euro, Search, RefreshCw } from 'lucide-react';
 import api from '../../services/api'; // Importa la instancia de la API
 
 interface Service {
@@ -126,10 +126,10 @@ const ServicesPage = () => {
   }
 
   return (
-    <div className="overflow-hidden">
+    <div className="">
       
       {/* Filters Section */}
-      <div className={`bg-white border-b sticky top-0 z-10 transition-all duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+      <div className={`bg-white border-b sticky top-0 z-10 transition-all duration-300 overscroll-none ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="max-w-max mx-auto p-2">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search Bar */}
@@ -203,16 +203,15 @@ const ServicesPage = () => {
                 <div className="flex items-center gap-1 mb-2">
                   <div className="flex items-center gap-1 md:gap-4 text-[10px] md:text-base">
                     <Clock className="h-5 w-5 text-gray-400" />
-                    <span className="text-gray-600">{service.duration} min</span> {/* Mostrar duración en minutos */}
+                    <span className="text-gray-600">{service.duration} min</span>
                   </div>
                   <div className="flex items-center gap-1 md:gap-4 text-[10px] md:text-base">
-                    <DollarSign className="h-5 w-5 text-gray-400" />
-                    <span className="text-gray-600">${service.price}</span>
+                    <Euro className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-600">€{service.price}</span>
                   </div>
-                  
                 </div>
                 <div className="flex items-center pb-2 gap-1 md:gap-4 text-[10px] md:text-base">
-                    <span className="text-green-500">Puntos: {service.points}</span> {/* Mostrar puntos de recompensa en verde */}
+                    <span className="text-green-500">Puntos: {service.points}</span>
                   </div>
                 <button
                   className="w-full bg-amber-600 text-[10px] md:text-xl text-white px-2 py-1 md:px-4 md:py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
