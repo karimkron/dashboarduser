@@ -21,6 +21,7 @@ const ServicesPage = () => {
   const [error, setError] = useState(''); // Estado para manejar errores
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]); // Estado para las categorías
   const [isSearchFocused, setIsSearchFocused] = useState(false); // Estado para manejar el foco en el input de búsqueda
+  const [isRefreshing, setIsRefreshing] = useState(false); // Estado para la animación del botón de actualización
 
   // Función para obtener los servicios desde la API o localStorage
   const fetchServices = async () => {
@@ -77,6 +78,13 @@ const ServicesPage = () => {
     };
   }, []);
 
+  // Función para manejar la actualización de servicios
+  const handleRefresh = async () => {
+    setIsRefreshing(true); // Activar la animación
+    await fetchServices(); // Actualizar servicios
+    setIsRefreshing(false); // Desactivar la animación
+  };
+
   // Filtrar servicios según la categoría seleccionada y la búsqueda
   const filteredServices = services.filter(service =>
     (selectedCategory === 'all' || service.category === selectedCategory) &&
@@ -127,36 +135,38 @@ const ServicesPage = () => {
 
             {/* Botón de actualización */}
             <button
-              onClick={fetchServices}
+              onClick={handleRefresh}
               className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
-              <RefreshCw className="h-5 w-5" />
+              <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span className="hidden md:inline">Actualizar</span>
             </button>
           </div>
 
-          {/* Categories */}
-          <div className="flex overflow-x-auto gap-2 pb-2 md:pb-0 w-full md:w-auto mt-4">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors
-                  ${selectedCategory === category.id
-                    ? 'bg-amber-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
+          {/* Categories (oculto en móviles cuando el input está enfocado) */}
+          {!isSearchFocused && (
+            <div className="flex overflow-x-auto gap-2 pb-2 md:pb-0 w-full md:w-auto mt-4">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors
+                    ${selectedCategory === category.id
+                      ? 'bg-amber-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Services Grid */}
       <div className="max-w-7xl mx-auto p-6">
-        <div className={`grid grid-cols-1 ${isSearchFocused ? 'md:grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'} gap-6`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredServices.map((service) => (
             <div
               key={service._id} // Usar _id como clave única
@@ -186,7 +196,7 @@ const ServicesPage = () => {
                     <span className="text-gray-600">${service.price}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-gray-600">Puntos: {service.points}</span> {/* Mostrar puntos de recompensa */}
+                    <span className="text-green-500">Puntos: {service.points}</span> {/* Mostrar puntos de recompensa en verde */}
                   </div>
                 </div>
 
