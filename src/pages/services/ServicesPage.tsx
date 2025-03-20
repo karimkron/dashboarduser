@@ -22,6 +22,8 @@ const ServicesPage = () => {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]); // Estado para las categorías
   const [isSearchFocused, setIsSearchFocused] = useState(false); // Estado para manejar el foco en el input de búsqueda
   const [isRefreshing, setIsRefreshing] = useState(false); // Estado para la animación del botón de actualización
+  const [isVisible, setIsVisible] = useState(true); // Estado para controlar la visibilidad de las categorías y el search bar
+  const [lastScrollY, setLastScrollY] = useState(0); // Estado para almacenar la última posición del scroll
 
   // Función para obtener los servicios desde la API o localStorage
   const fetchServices = async () => {
@@ -91,6 +93,28 @@ const ServicesPage = () => {
     service.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Efecto para manejar el scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY > lastScrollY) {
+        // Scroll hacia abajo: ocultar categorías y search bar
+        setIsVisible(false);
+      } else {
+        // Scroll hacia arriba: mostrar categorías y search bar
+        setIsVisible(true);
+      }
+
+      setLastScrollY(currentScrollY); // Actualizar la última posición del scroll
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollY]);
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Cargando servicios...</div>;
   }
@@ -100,24 +124,26 @@ const ServicesPage = () => {
   }
 
   return (
-    <div className="space-y-6 -m-6">
+    <div className="">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-gray-900 to-amber-900 border-b">
-        <div className="max-w-7xl mx-auto p-6">
-          <div className="text-center py-12">
-            <h1 className="text-4xl font-bold text-white mb-4">
-              Nuestros Servicios
-            </h1>
-            <p className="text-gray-300 max-w-2xl mx-auto">
-              Descubre nuestra amplia gama de servicios profesionales diseñados para realzar tu estilo personal
-            </p>
+      {!isSearchFocused && (
+        <div className="bg-gradient-to-r from-gray-900 to-amber-900 border-b">
+          <div className="max-w-7xl mx-auto p-2">
+            <div className="text-center py-6">
+              <h1 className="text-4xl font-bold text-white mb-4">
+                Nuestros Servicios
+              </h1>
+              <p className="text-gray-300 max-w-2xl mx-auto">
+                Descubre nuestra amplia gama de servicios profesionales diseñados para realzar tu estilo personal
+              </p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Filters Section */}
-      <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto p-6">
+      <div className={`bg-white border-b sticky top-0 z-10 transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
+        <div className="max-w-max mx-auto p-2">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search Bar */}
             <div className="relative w-full md:w-96">
@@ -132,15 +158,6 @@ const ServicesPage = () => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
-
-            {/* Botón de actualización */}
-            <button
-              onClick={handleRefresh}
-              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
-            >
-              <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline">Actualizar</span>
-            </button>
           </div>
 
           {/* Categories (oculto en móviles cuando el input está enfocado) */}
@@ -159,14 +176,24 @@ const ServicesPage = () => {
                   {category.name}
                 </button>
               ))}
+              {/* Botón de actualización */}
+              {!isSearchFocused && (
+                <button
+                  onClick={handleRefresh}
+                  className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden md:inline">Actualizar</span>
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
 
       {/* Services Grid */}
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto p-2">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2">
           {filteredServices.map((service) => (
             <div
               key={service._id} // Usar _id como clave única

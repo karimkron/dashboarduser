@@ -3,6 +3,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { Home, User, Calendar, Package, Settings } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { useUIStore } from '../../store/uiStore'; // Importar el store para acceder al estado del sidebar
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -10,6 +11,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
+  const { isSidebarOpen } = useUIStore(); // Obtener el estado del sidebar
 
   const mobileMenuItems = [
     { 
@@ -42,9 +44,12 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-gray-100">
       <Sidebar />
-      <div className="lg:ml-64 min-h-screen pb-16 lg:pb-0"> {/* Añadimos padding bottom en móvil */}
+      {/* Ajustar el margen izquierdo dinámicamente */}
+      <div className={`min-h-screen pb-16 lg:pb-0 transition-all duration-300 ${
+        isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
+      }`}>
         <Header />
-        <main className="p-6">
+        <main className="">
           {children}
         </main>
       </div>
