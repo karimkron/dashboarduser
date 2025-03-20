@@ -126,14 +126,14 @@ const ServicesPage = () => {
   }
 
   return (
-    <div className="">
+    <div className="sticky top-0 z-10">
       
       {/* Filters Section */}
       <div className={`bg-white border-b sticky top-0 z-10 transition-all duration-300 overscroll-none ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         <div className="max-w-max mx-auto p-2">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Search Bar */}
-            <div className="relative w-full md:w-96">
+            <div className="relative w-full md:w-96 ">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
@@ -149,7 +149,7 @@ const ServicesPage = () => {
 
           {/* Categories (oculto en móviles cuando el input está enfocado) */}
           {!isSearchFocused && (
-            <div className="flex overflow-x-auto gap-2 pb-2 md:pb-0 w-full md:w-auto mt-4">
+            <div className="flex overflow-x-auto sticky top-0 z-10 gap-2 pb-2 md:pb-0 w-full md:w-auto mt-4">
               {categories.map((category) => (
                 <button
                   key={category.id}
