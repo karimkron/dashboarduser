@@ -1,185 +1,95 @@
-
-import { useState } from 'react';
-import { Clock, DollarSign, Search, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Clock, DollarSign, Search, RefreshCw } from 'lucide-react';
+import api from '../../services/api'; // Importa la instancia de la API
 
 interface Service {
-  id: number;
+  _id: string; // Cambiado a _id para coincidir con MongoDB
   name: string;
   description: string;
   price: number;
-  duration: string;
+  duration: number; // Cambiado a number para coincidir con el backend
   category: string;
   image: string;
-  rating: number;
-  reviews: number;
-  available: boolean;
+  points: number; // Puntos de recompensa
 }
 
 const ServicesPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [services, setServices] = useState<Service[]>([]); // Estado para almacenar los servicios
+  const [loading, setLoading] = useState(true); // Estado para manejar la carga
+  const [error, setError] = useState(''); // Estado para manejar errores
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]); // Estado para las categorías
+  const [isSearchFocused, setIsSearchFocused] = useState(false); // Estado para manejar el foco en el input de búsqueda
 
-  const categories = [
-    { id: 'all', name: 'Todos' },
-    { id: 'haircuts', name: 'Cortes' },
-    { id: 'beards', name: 'Barbas' },
-    { id: 'treatments', name: 'Tratamientos' },
-    { id: 'color', name: 'Color' },
-    { id: 'kids', name: 'Niños' }
-  ];
+  // Función para obtener los servicios desde la API o localStorage
+  const fetchServices = async () => {
+    try {
+      const response = await api.get<Service[]>('/api/services'); // Tipar la respuesta como Service[]
+      const servicesData = response.data;
 
-  const services: Service[] = [
-    {
-      id: 1,
-      name: "Corte Clásico",
-      description: "Corte tradicional con tijera y acabado con navaja",
-      price: 25,
-      duration: "30 min",
-      category: "haircuts",
-      image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-      rating: 4.9,
-      reviews: 128,
-      available: true
-    },
-    {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-      {
-        id: 1,
-        name: "Corte Clásico",
-        description: "Corte tradicional con tijera y acabado con navaja",
-        price: 25,
-        duration: "30 min",
-        category: "haircuts",
-        image: "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80",
-        rating: 4.9,
-        reviews: 128,
-        available: true
-      },
-    // ... más servicios
-  ];
+      // Obtener categorías únicas de los servicios
+      const uniqueCategories = Array.from(new Set(servicesData.map(service => service.category)))
+        .map(category => ({ id: category, name: category }));
 
-  const filteredServices = services.filter(service => 
+      // Guardar servicios y categorías en localStorage
+      localStorage.setItem('services', JSON.stringify(servicesData));
+      localStorage.setItem('categories', JSON.stringify(uniqueCategories));
+
+      // Actualizar el estado
+      setServices(servicesData);
+      setCategories([{ id: 'all', name: 'Todos' }, ...uniqueCategories]);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error al obtener los servicios:', error);
+      setError('Error al cargar los servicios. Inténtalo de nuevo más tarde.');
+      setLoading(false);
+    }
+  };
+
+  // Cargar servicios al montar el componente
+  useEffect(() => {
+    const storedServices = localStorage.getItem('services');
+    const storedCategories = localStorage.getItem('categories');
+
+    if (storedServices && storedCategories) {
+      // Si los servicios y categorías están en localStorage, usarlos
+      setServices(JSON.parse(storedServices));
+      setCategories(JSON.parse(storedCategories));
+      setLoading(false);
+    } else {
+      // Si no están en localStorage, hacer la solicitud a la API
+      fetchServices();
+    }
+  }, []);
+
+  // Actualizar servicios cuando el componente se monta o cuando el usuario sale y vuelve
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchServices(); // Actualizar servicios cuando la página vuelve a estar visible
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Filtrar servicios según la categoría seleccionada y la búsqueda
+  const filteredServices = services.filter(service =>
     (selectedCategory === 'all' || service.category === selectedCategory) &&
     service.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Cargando servicios...</div>;
+  }
+
+  if (error) {
+    return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
+  }
 
   return (
     <div className="space-y-6 -m-6">
@@ -209,51 +119,55 @@ const ServicesPage = () => {
                 placeholder="Buscar servicios..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
 
-            {/* Categories */}
-            <div className="flex overflow-x-auto gap-2 pb-2 md:pb-0 w-full md:w-auto">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors
-                    ${selectedCategory === category.id
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                >
-                  {category.name}
-                </button>
-              ))}
-            </div>
+            {/* Botón de actualización */}
+            <button
+              onClick={fetchServices}
+              className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              <RefreshCw className="h-5 w-5" />
+              <span className="hidden md:inline">Actualizar</span>
+            </button>
+          </div>
+
+          {/* Categories */}
+          <div className="flex overflow-x-auto gap-2 pb-2 md:pb-0 w-full md:w-auto mt-4">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors
+                  ${selectedCategory === category.id
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+              >
+                {category.name}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Services Grid */}
       <div className="max-w-7xl mx-auto p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className={`grid grid-cols-1 ${isSearchFocused ? 'md:grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'} gap-6`}>
           {filteredServices.map((service) => (
             <div
-              key={service.id}
+              key={service._id} // Usar _id como clave única
               className="bg-white border rounded-lg overflow-hidden hover:border-amber-600 transition-colors"
             >
               <div className="aspect-video relative">
                 <img
-                  src={service.image}
+                  src={service.image || 'https://placehold.co/300x200'} // Usar una URL de respaldo que funcione
                   alt={service.name}
                   className="w-full h-full object-cover"
                 />
-                {!service.available && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    <span className="px-3 py-1 bg-red-500 text-white rounded-full text-sm">
-                      No disponible
-                    </span>
-                  </div>
-                )}
               </div>
 
               <div className="p-6">
@@ -265,43 +179,22 @@ const ServicesPage = () => {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="flex items-center gap-1">
                     <Clock className="h-5 w-5 text-gray-400" />
-                    <span className="text-gray-600">{service.duration}</span>
+                    <span className="text-gray-600">{service.duration} min</span> {/* Mostrar duración en minutos */}
                   </div>
                   <div className="flex items-center gap-1">
                     <DollarSign className="h-5 w-5 text-gray-400" />
                     <span className="text-gray-600">${service.price}</span>
                   </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-600">Puntos: {service.points}</span> {/* Mostrar puntos de recompensa */}
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-4 w-4 ${
-                            i < service.rating
-                              ? 'text-yellow-400 fill-yellow-400'
-                              : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-sm text-gray-500">
-                      ({service.reviews} reseñas)
-                    </span>
-                  </div>
-                  <button
-                    disabled={!service.available}
-                    className={`px-4 py-2 rounded-lg transition-colors
-                      ${service.available
-                        ? 'bg-amber-600 text-white hover:bg-amber-700'
-                        : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                      }`}
-                  >
-                    Reservar
-                  </button>
-                </div>
+                <button
+                  className="w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                >
+                  Reservar
+                </button>
               </div>
             </div>
           ))}
