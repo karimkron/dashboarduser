@@ -1,9 +1,9 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Home, User, Calendar, Package, Settings } from 'lucide-react';
+import { Home, Calendar, Package, Settings, ShoppingCart } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { useUIStore } from '../../store/uiStore'; // Importar el store para acceder al estado del sidebar
+import { useUIStore } from '../../store/uiStore';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,7 +11,26 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const location = useLocation();
-  const { isSidebarOpen } = useUIStore(); // Obtener el estado del sidebar
+  const { isSidebarOpen } = useUIStore();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar si estamos en un dispositivo móvil
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    
+    // Comprobar al cargar
+    checkIfMobile();
+    
+    // Comprobar al cambiar el tamaño de la ventana
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Limpiar el listener cuando el componente se desmonte
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
 
   const mobileMenuItems = [
     { 
@@ -30,9 +49,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       path: '/dashboard/appointments',
     },
     { 
-      icon: User, 
-      label: 'Perfil', 
-      path: '/dashboard/profile',
+      icon: ShoppingCart, 
+      label: 'Tienda', 
+      path: '/dashboard/products',
     },
     { 
       icon: Settings, 
@@ -44,17 +63,23 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   return (
     <div className="min-h-screen bg-gray-100">
       <Sidebar />
-      {/* Ajustar el margen izquierdo dinámicamente */}
-      <div className={`min-h-screen pb-16 lg:pb-0 transition-all duration-300 ${
-        isSidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
-      }`}>
-        <Header />
-        <main className="">
+      <Header />
+      
+      {/* Contenido principal */}
+      <div
+        className="min-h-screen transition-all duration-300"
+        style={{
+          marginLeft: isMobile ? '0' : (isSidebarOpen ? '16rem' : '5rem'),
+          paddingBottom: isMobile ? '64px' : '0', // Espacio para el menú móvil
+          marginTop: '0', // El padding top lo maneja cada componente
+        }}
+      >
+        <main className="w-full">
           {children}
         </main>
       </div>
       
-      {/* Menú móvil mejorado */}
+      {/* Menú móvil */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
         <div className="flex items-center justify-around">
           {mobileMenuItems.map((item) => (

@@ -1,4 +1,4 @@
-import { Home, User, Calendar, Package, Settings, Menu } from 'lucide-react';
+import { Home, Calendar, Package, Settings, Menu, ShoppingCart } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
 
@@ -8,7 +8,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { title: 'Dashboard', icon: Home, path: '/dashboard' },
-    { title: 'Mi Perfil', icon: User, path: '/dashboard/profile' },
+    { title: 'Tienda', icon: ShoppingCart, path: '/dashboard/products' },
     { title: 'Citas', icon: Calendar, path: '/dashboard/appointments' },
     { title: 'Servicios', icon: Package, path: '/dashboard/services' },
     { title: 'Configuración', icon: Settings, path: '/dashboard/settings' }
@@ -34,7 +34,7 @@ const Sidebar = () => {
           <Link
             key={item.path}
             to={item.path}
-            className={`mb-2 flex items-center rounded-lg px-4 py-2.5 transition-colors
+            className={`mb-2 flex  items-center rounded-lg px-4 py-2.5 transition-colors
               ${location.pathname === item.path
                 ? 'bg-amber-600 text-white'
                 : 'text-gray-600 hover:bg-gray-100'}`}
