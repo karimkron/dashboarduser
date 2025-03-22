@@ -1,21 +1,27 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import DashboardLayout from '../components/layout/DashboardLayout';
-import ProfilePage from '../pages/profile/ProfilePage';
-import NotificationsPage from '../pages/notifications/NotificationsPage';
-import ServicesPage from '../pages/services/ServicesPage';
-import AppointmentsPage from '../pages/appointments/AppointmentsPage';
-import SettingsPage from '../pages/settings/SettingsPage';
-import DashboardPage from '../pages/dashboard/DashboardPage';
-import LoginPage from '../pages/auth/LoginPage';
-import RegisterPage from '../pages/auth/RegisterPage';
-import ForgotPasswordPage from '../pages/auth/ForgotPasswordPage';
-import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
-import VerifyEmailPage from '../pages/auth/VerifyEmailPage';
-import ProductsPage from '../pages/Products/ProductsPage';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import DashboardLayout from "../components/layout/DashboardLayout";
+import ProfilePage from "../pages/profile/ProfilePage";
+import NotificationsPage from "../pages/notifications/NotificationsPage";
+import ServicesPage from "../pages/services/ServicesPage";
+import AppointmentsPage from "../pages/appointments/AppointmentsPage";
+import SettingsPage from "../pages/settings/SettingsPage";
+import DashboardPage from "../pages/dashboard/DashboardPage";
+import LoginPage from "../pages/auth/LoginPage";
+import RegisterPage from "../pages/auth/RegisterPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
+import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
+import ProductsPage from "../pages/Products/ProductsPage";
+import ServiceDetailPage from "../pages/services/components/ServiceDetailPage";
 
 // Componente para proteger rutas que requieren autenticación
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
-  const isAuthenticated = !!localStorage.getItem('token'); // Verifica si el usuario está autenticado
+  const isAuthenticated = !!localStorage.getItem("token"); // Verifica si el usuario está autenticado
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />; // Redirige a login si no está autenticado
@@ -39,7 +45,10 @@ const AppRoutes = () => {
         <Route
           path="/"
           element={
-            <Navigate to={localStorage.getItem('token') ? '/dashboard' : '/login'} replace />
+            <Navigate
+              to={localStorage.getItem("token") ? "/dashboard" : "/login"}
+              replace
+            />
           }
         />
 
@@ -100,6 +109,16 @@ const AppRoutes = () => {
             <ProtectedRoute>
               <DashboardLayout>
                 <ServicesPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/services/:serviceId"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <ServiceDetailPage />
               </DashboardLayout>
             </ProtectedRoute>
           }

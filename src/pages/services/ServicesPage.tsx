@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Search, ChevronRight, Clock } from 'lucide-react';
-import { useServiceStore } from '../../store/serviceStore';
+import { useState, useEffect } from "react";
+import { Search, ChevronRight, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useServiceStore } from "../../store/serviceStore";
+
 
 const ServicesPage = () => {
-  const { services, categories, loading, error, fetchServices } = useServiceStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const { services, categories, loading, error, fetchServices } =
+    useServiceStore();
+  const [searchQuery, setSearchQuery] = useState("");
   const [filteredServices, setFilteredServices] = useState<any[]>([]);
+  const navigate = useNavigate()
 
   // Fetch services on component mount
   useEffect(() => {
@@ -20,45 +24,49 @@ const ServicesPage = () => {
     }
 
     const normalizedQuery = searchQuery.toLowerCase().trim();
-    const filtered = services.filter(service => {
+    const filtered = services.filter((service) => {
       const nameMatch = service.name.toLowerCase().includes(normalizedQuery);
-      const descMatch = service.description.toLowerCase().includes(normalizedQuery);
-      const categoryMatch = service.category.toLowerCase().includes(normalizedQuery);
-      
+      const descMatch = service.description
+        .toLowerCase()
+        .includes(normalizedQuery);
+      const categoryMatch = service.category
+        .toLowerCase()
+        .includes(normalizedQuery);
+
       return nameMatch || descMatch || categoryMatch;
     });
-    
+
     setFilteredServices(filtered);
   }, [searchQuery, services]);
 
   // Group services by category for mobile view
   const servicesByCategory = categories.reduce((acc, category) => {
-    if (category.id === 'all') return acc;
-    
-    const categoryServices = filteredServices.filter(service => 
-      service.category === category.id
+    if (category.id === "all") return acc;
+
+    const categoryServices = filteredServices.filter(
+      (service) => service.category === category.id
     );
-    
+
     if (categoryServices.length > 0) {
       acc[category.id] = {
         name: category.name,
-        services: categoryServices
+        services: categoryServices,
       };
     }
-    
+
     return acc;
-  }, {} as Record<string, { name: string, services: any[] }>);
+  }, {} as Record<string, { name: string; services: any[] }>);
 
   // Create a "Featured Services" category
   const featuredServices = {
-    name: 'Servicios Destacados',
-    services: filteredServices.slice(0, 10)
+    name: "Servicios Destacados",
+    services: filteredServices.slice(0, 10),
   };
 
   // Create a "New Services" category
   const newServices = {
-    name: 'Nuevos Servicios',
-    services: [...filteredServices].sort(() => 0.5 - Math.random()).slice(0, 8)
+    name: "Nuevos Servicios",
+    services: [...filteredServices].sort(() => 0.5 - Math.random()).slice(0, 8),
   };
 
   if (loading) {
@@ -73,9 +81,11 @@ const ServicesPage = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center p-4">
-          <p className="text-red-600 font-medium mb-2">Error al cargar servicios</p>
+          <p className="text-red-600 font-medium mb-2">
+            Error al cargar servicios
+          </p>
           <p className="text-gray-600">{error}</p>
-          <button 
+          <button
             onClick={() => fetchServices()}
             className="mt-4 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
           >
@@ -105,58 +115,75 @@ const ServicesPage = () => {
       {/* Desktop View */}
       <div className="hidden md:block px-4">
         <h1 className="text-2xl font-bold my-6">Nuestros Servicios</h1>
-        
+
         {filteredServices.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-600">No se encontraron servicios que coincidan con tu búsqueda.</p>
+        <p className="text-gray-600">
+          No se encontraron servicios que coincidan con tu búsqueda.
+        </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredServices.map((service) => (
-              <div 
-                key={service._id} 
-                className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-              >
-                <div className="relative pt-[100%]">
-                  <img 
-                    src={service.image || 'https://placehold.co/300x200'} 
-                    alt={service.name}
-                    className="absolute top-0 left-0 w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-3">
-                  <h3 className="font-medium text-gray-800 truncate">{service.name}</h3>
-                  <p className="text-gray-500 text-sm line-clamp-2 h-10">{service.description}</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xl font-bold text-gray-900">{service.price.toFixed(2)} €</span>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4 text-gray-400" />
-                      <span className="text-xs text-gray-600">{service.duration} min</span>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
-                      {service.category}
-                    </span>
-                    <span className="inline-block bg-green-100 text-green-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
-                      Puntos: {service.points}
-                    </span>
-                  </div>
-                  <button className="mt-2 w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500">
-                    Reservar
-                  </button>
-                </div>
-              </div>
-            ))}
+        {filteredServices.map((service) => (
+          <div
+            key={service._id}
+            className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full"
+          >
+            <div className="relative pt-[100%]">
+          <img
+            src={service.image || "https://placehold.co/300x200"}
+            alt={service.name}
+            className="absolute top-0 left-0 w-full h-full object-cover"
+          />
+            </div>
+            <div className="p-3 flex-grow">
+          <h3 className="font-medium text-gray-800 truncate">
+            {service.name}
+          </h3>
+          <p className="text-gray-500 text-sm line-clamp-2 h-10">
+            {service.description}
+          </p>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-xl font-bold text-gray-900">
+              {service.price.toFixed(2)} €
+            </span>
+            <div className="flex items-center gap-1">
+              <Clock className="h-4 w-4 text-gray-400" />
+              <span className="text-xs text-gray-600">
+            {service.duration} min
+              </span>
+            </div>
+          </div>
+          <div className="mt-2">
+            <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
+              {service.category}
+            </span>
+            <span className="inline-block bg-green-100 text-green-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
+              Puntos: {service.points}
+            </span>
+          </div>
+            </div>
+            <button
+          onClick={() =>
+            navigate(`/dashboard/services/${service._id}`)
+          }
+          className="mt-auto w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+          Reservar
+            </button>
+          </div>
+        ))}
           </div>
         )}
       </div>
 
-      {/* Mobile View */}
-      <div className="md:hidden">
+       {/* Mobile View Actualizado */}
+       <div className="md:hidden">
         {filteredServices.length === 0 ? (
           <div className="text-center py-8 px-4">
-            <p className="text-gray-600">No se encontraron servicios que coincidan con tu búsqueda.</p>
+            <p className="text-gray-600">
+              No se encontraron servicios que coincidan con tu búsqueda.
+            </p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -173,20 +200,27 @@ const ServicesPage = () => {
                   <div 
                     key={service._id} 
                     className="flex-shrink-0 w-32"
+                    onClick={() => navigate(`/dashboard/services/${service._id}`)}
                   >
-                    <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
+                    <div className="bg-white rounded-lg overflow-hidden border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
                       <div className="relative pt-[100%]">
-                        <img 
-                          src={service.image || 'https://placehold.co/300x200'} 
+                        <img
+                          src={service.image || "https://placehold.co/300x200"}
                           alt={service.name}
                           className="absolute top-0 left-0 w-full h-full object-cover"
                         />
                       </div>
                       <div className="p-2">
-                        <h3 className="font-medium text-sm text-gray-800 truncate">{service.name}</h3>
-                        <p className="text-xs text-gray-500 line-clamp-1">{service.description}</p>
+                        <h3 className="font-medium text-sm text-gray-800 truncate">
+                          {service.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 line-clamp-1">
+                          {service.description}
+                        </p>
                         <div className="flex items-center justify-between mt-1">
-                          <p className="text-base font-bold">{service.price.toFixed(2)} €</p>
+                          <p className="text-base font-bold">
+                            {service.price.toFixed(2)} €
+                          </p>
                           <div className="flex items-center">
                             <Clock className="h-3 w-3 text-gray-400 mr-1" />
                             <span className="text-xs">{service.duration}m</span>
@@ -212,20 +246,27 @@ const ServicesPage = () => {
                   <div 
                     key={service._id} 
                     className="flex-shrink-0 w-32"
+                    onClick={() => navigate(`/dashboard/services/${service._id}`)}
                   >
-                    <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
+                    <div className="bg-white rounded-lg overflow-hidden border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
                       <div className="relative pt-[100%]">
-                        <img 
-                          src={service.image || 'https://placehold.co/300x200'} 
+                        <img
+                          src={service.image || "https://placehold.co/300x200"}
                           alt={service.name}
                           className="absolute top-0 left-0 w-full h-full object-cover"
                         />
                       </div>
                       <div className="p-2">
-                        <h3 className="font-medium text-sm text-gray-800 truncate">{service.name}</h3>
-                        <p className="text-xs text-gray-500 line-clamp-1">{service.description}</p>
+                        <h3 className="font-medium text-sm text-gray-800 truncate">
+                          {service.name}
+                        </h3>
+                        <p className="text-xs text-gray-500 line-clamp-1">
+                          {service.description}
+                        </p>
                         <div className="flex items-center justify-between mt-1">
-                          <p className="text-base font-bold">{service.price.toFixed(2)} €</p>
+                          <p className="text-base font-bold">
+                            {service.price.toFixed(2)} €
+                          </p>
                           <div className="flex items-center">
                             <Clock className="h-3 w-3 text-gray-400 mr-1" />
                             <span className="text-xs">{service.duration}m</span>
@@ -239,45 +280,56 @@ const ServicesPage = () => {
             </div>
 
             {/* Categories Sections */}
-            {Object.entries(servicesByCategory).map(([categoryId, category]) => (
-              <div key={categoryId} className="bg-white">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <h2 className="font-bold text-lg">{category.name}</h2>
-                  <button className="text-amber-500 text-sm flex items-center">
-                    Ver más <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
-                <div className="flex overflow-x-auto pb-4 px-4 space-x-3 hide-scrollbar">
-                  {category.services.map((service) => (
-                    <div 
-                      key={service._id} 
-                      className="flex-shrink-0 w-32"
-                    >
-                      <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
-                        <div className="relative pt-[100%]">
-                          <img 
-                            src={service.image || 'https://placehold.co/300x200'} 
-                            alt={service.name}
-                            className="absolute top-0 left-0 w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="p-2">
-                          <h3 className="font-medium text-sm text-gray-800 truncate">{service.name}</h3>
-                          <p className="text-xs text-gray-500 line-clamp-1">{service.description}</p>
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="text-base font-bold">{service.price.toFixed(2)} €</p>
-                            <div className="flex items-center">
-                              <Clock className="h-3 w-3 text-gray-400 mr-1" />
-                              <span className="text-xs">{service.duration}m</span>
+            {Object.entries(servicesByCategory).map(
+              ([categoryId, category]) => (
+                <div key={categoryId} className="bg-white">
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <h2 className="font-bold text-lg">{category.name}</h2>
+                    <button className="text-amber-500 text-sm flex items-center">
+                      Ver más <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex overflow-x-auto pb-4 px-4 space-x-3 hide-scrollbar">
+                    {category.services.map((service) => (
+                      <div 
+                        key={service._id} 
+                        className="flex-shrink-0 w-32"
+                        onClick={() => navigate(`/dashboard/services/${service._id}`)}
+                      >
+                        <div className="bg-white rounded-lg overflow-hidden border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
+                          <div className="relative pt-[100%]">
+                            <img
+                              src={service.image || "https://placehold.co/300x200"}
+                              alt={service.name}
+                              className="absolute top-0 left-0 w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="p-2">
+                            <h3 className="font-medium text-sm text-gray-800 truncate">
+                              {service.name}
+                            </h3>
+                            <p className="text-xs text-gray-500 line-clamp-1">
+                              {service.description}
+                            </p>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-base font-bold">
+                                {service.price.toFixed(2)} €
+                              </p>
+                              <div className="flex items-center">
+                                <Clock className="h-3 w-3 text-gray-400 mr-1" />
+                                <span className="text-xs">
+                                  {service.duration}m
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         )}
       </div>
