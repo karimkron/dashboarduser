@@ -1,12 +1,15 @@
-import { useState, useEffect, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, ChevronRight } from 'lucide-react';
 import { useProductsStore } from '../../store/productsStore';
+import { useNavigate } from 'react-router-dom';
 
 
 const ProductsPage = () => {
   const { products, categories, loading, error, fetchProducts } = useProductsStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+
+  const navigate = useNavigate()
  
 
   // Fetch products on component mount
@@ -106,57 +109,63 @@ const ProductsPage = () => {
         </div>
       </div>
 
-      {/* Desktop View */}
+      {/* Desktop View Actualizada */}
       <div className="hidden md:block px-4">
         <h1 className="text-2xl font-bold my-6">Nuestros Productos</h1>
         
         {filteredProducts.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-600">No se encontraron productos que coincidan con tu búsqueda.</p>
+        <p className="text-gray-600">No se encontraron productos que coincidan con tu búsqueda.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredProducts.map((product) => (
-              <div 
-                key={product._id} 
-                className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+        {filteredProducts.map((product) => (
+          <div 
+            key={product._id} 
+            className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col"
+          >
+            <div className="relative pt-[100%]">
+          <img 
+            src={product.mainImage || '/placeholder-product.png'} 
+            alt={product.name}
+            className="absolute top-0 left-0 w-full h-full object-cover"
+          />
+            </div>
+            <div className="p-3 flex flex-col flex-grow">
+          <h3 className="font-medium text-gray-800 truncate">{product.name}</h3>
+          <p className="text-gray-500 text-sm line-clamp-2 h-10">{product.description}</p>
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-xl font-bold text-gray-900">{product.price.toFixed(2)} €</span>
+            {product.stock > 0 ? (
+              <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Disponible</span>
+            ) : (
+              <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">Agotado</span>
+            )}
+          </div>
+          <div className="mt-2">
+            {product.categories.slice(0, 2).map((category: string, idx: number) => (
+              <span 
+            key={idx} 
+            className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full"
               >
-                <div className="relative pt-[100%]">
-                  <img 
-                    src={product.mainImage || '/placeholder-product.png'} 
-                    alt={product.name}
-                    className="absolute top-0 left-0 w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-3">
-                  <h3 className="font-medium text-gray-800 truncate">{product.name}</h3>
-                  <p className="text-gray-500 text-sm line-clamp-2 h-10">{product.description}</p>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xl font-bold text-gray-900">{product.price.toFixed(2)} €</span>
-                    {product.stock > 0 ? (
-                      <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Disponible</span>
-                    ) : (
-                      <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded-full">Agotado</span>
-                    )}
-                  </div>
-                  <div className="mt-2">
-                    {product.categories.slice(0, 2).map((category: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | null | undefined, idx: Key | null | undefined) => (
-                      <span 
-                        key={idx} 
-                        className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full"
-                      >
-                        {category}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            {category}
+              </span>
             ))}
+          </div>
+          <button
+            onClick={() => navigate(`/dashboard/products/${product._id}`)}
+            className="mt-auto w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700"
+          >
+            Ver producto
+          </button>
+            </div>
+          </div>
+        ))}
           </div>
         )}
       </div>
 
-      {/* Mobile View */}
+      {/* Mobile View Actualizada */}
       <div className="md:hidden">
         {filteredProducts.length === 0 ? (
           <div className="text-center py-8 px-4">
@@ -176,9 +185,10 @@ const ProductsPage = () => {
                 {newArrivals.products.map((product) => (
                   <div 
                     key={product._id} 
-                    className="flex-shrink-0 w-32"
+                    className="flex-shrink-0 w-32 cursor-pointer"
+                    onClick={() => navigate(`/dashboard/products/${product._id}`)}
                   >
-                    <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
+                    <div className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-md transition-shadow">
                       <div className="relative pt-[100%]">
                         <img 
                           src={product.mainImage || '/placeholder-product.png'} 
@@ -209,9 +219,10 @@ const ProductsPage = () => {
                 {featuredProducts.products.map((product) => (
                   <div 
                     key={product._id} 
-                    className="flex-shrink-0 w-32"
+                    className="flex-shrink-0 w-32 cursor-pointer"
+                    onClick={() => navigate(`/dashboard/products/${product._id}`)}
                   >
-                    <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
+                    <div className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-md transition-shadow">
                       <div className="relative pt-[100%]">
                         <img 
                           src={product.mainImage || '/placeholder-product.png'} 
@@ -243,9 +254,10 @@ const ProductsPage = () => {
                   {category.products.map((product) => (
                     <div 
                       key={product._id} 
-                      className="flex-shrink-0 w-32"
+                      className="flex-shrink-0 w-32 cursor-pointer"
+                      onClick={() => navigate(`/dashboard/products/${product._id}`)}
                     >
-                      <div className="bg-white rounded-lg overflow-hidden border border-gray-100">
+                      <div className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-md transition-shadow">
                         <div className="relative pt-[100%]">
                           <img 
                             src={product.mainImage || '/placeholder-product.png'} 

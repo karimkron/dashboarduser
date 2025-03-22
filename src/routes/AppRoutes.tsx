@@ -18,6 +18,7 @@ import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import VerifyEmailPage from "../pages/auth/VerifyEmailPage";
 import ProductsPage from "../pages/Products/ProductsPage";
 import ServiceDetailPage from "../pages/services/components/ServiceDetailPage";
+import ProductDetailPage from "../pages/Products/components/ProductDetailPage";
 
 // Componente para proteger rutas que requieren autenticación
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -79,6 +80,16 @@ const AppRoutes = () => {
             <ProtectedRoute>
               <DashboardLayout>
                 <ProductsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/products/:productId"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <ProductDetailPage />
               </DashboardLayout>
             </ProtectedRoute>
           }
