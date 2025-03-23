@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { useProductsStore } from "../../../store/productsStore";
+import { toast } from "react-toastify";
+import { useCartStore } from "../../../store/cartStore";
+import CartAnimation from "../../cart/components/CartAnimation"; 
 
 interface Product {
   _id: string;
@@ -27,6 +30,14 @@ const ProductDetailPage = () => {
     Product[]
   >([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Estado para la animación
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animationStartPosition, setAnimationStartPosition] = useState({ x: 0, y: 0 });
+  const [animationEndPosition, setAnimationEndPosition] = useState({ x: 0, y: 0 });
+  const addToCartButtonRef = useRef<HTMLButtonElement>(null);
+
+  const { addToCart } = useCartStore();
 
   useEffect(() => {
     const loadData = async () => {
@@ -66,6 +77,109 @@ const ProductDetailPage = () => {
     loadData();
   }, [productId, products]);
 
+  // Actualizar la posición del carrito cuando el componente se monta o el tamaño de pantalla cambia
+  useEffect(() => {
+    const updateCartPosition = () => {
+      const cartIcon = document.querySelector('[aria-label="Cart"]');
+      if (cartIcon) {
+        const rect = cartIcon.getBoundingClientRect();
+        setAnimationEndPosition({ 
+          x: rect.left + rect.width / 2, 
+          y: rect.top + rect.height / 2 
+        });
+      }
+    };
+    
+    // Inicializar posición
+    updateCartPosition();
+    
+    // Actualizar posición al cambiar tamaño de ventana
+    window.addEventListener('resize', updateCartPosition);
+    
+    return () => {
+      window.removeEventListener('resize', updateCartPosition);
+    };
+  }, []);
+
+ // Handle adding to cart with animation
+const handleAddToCart = async () => {
+  if (!product || isAnimating) return;
+  
+  try {
+    // Get product image element for starting position
+    if (addToCartButtonRef.current) {
+      const btnRect = addToCartButtonRef.current.getBoundingClientRect();
+      const imgElement = document.querySelector(`img[src="${product.images[currentImageIndex]}"]`);
+      let startX, startY;
+      
+      if (imgElement) {
+        // Use product image position if available
+        const imgRect = imgElement.getBoundingClientRect();
+        startX = imgRect.left + imgRect.width / 2;
+        startY = imgRect.top + imgRect.height / 2;
+      } else {
+        // Fallback to button position
+        startX = btnRect.left + btnRect.width / 2;
+        startY = btnRect.top - 40;
+      }
+      
+      setAnimationStartPosition({
+        x: startX,
+        y: startY
+      });
+    }
+    
+    // Update cart icon position
+    const cartIcon = document.querySelector('[aria-label="Cart"]');
+    if (cartIcon) {
+      const rect = cartIcon.getBoundingClientRect();
+      setAnimationEndPosition({ 
+        x: rect.left + rect.width / 2, 
+        y: rect.top + rect.height / 2 
+      });
+    }
+    
+    // Start animation
+    setIsAnimating(true);
+    
+    // Add item to cart (actual functionality)
+    // Delay the API call to let the animation start
+    setTimeout(async () => {
+      try {
+        await addToCart(product._id);
+      } catch (error) {
+        console.error('Error during addToCart:', error);
+        // Show error toast if API call fails, but don't stop animation
+        toast.error('Error al agregar al carrito', {
+          autoClose: 1000,
+          position: "top-right"
+        });
+      }
+    }, 100);
+  } catch (error) {
+    console.error('Error in handleAddToCart:', error);
+    setIsAnimating(false);
+    toast.error('Error al preparar animación', {
+      autoClose: 1000,
+      position: "top-right"
+    });
+  }
+};
+  
+  const handleAnimationComplete = () => {
+    setIsAnimating(false);
+    // Show success toast after animation completes
+    toast.success('¡Producto agregado al carrito!', {
+      position: "top-right",
+      autoClose: 1000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      className: "bg-green-500"
+    });
+  };
+
   const handleBack = () => navigate(-1);
   const handleNextImage = () =>
     setCurrentImageIndex((prev) => (prev + 1) % product!.images.length);
@@ -89,6 +203,13 @@ const ProductDetailPage = () => {
 
   return (
     <div className="pt-16 pb-20 md:pt-20 lg:pb-0 bg-gray-50">
+      <CartAnimation 
+        isActive={isAnimating}
+        productImageSrc={product.images[currentImageIndex]}
+        startPosition={animationStartPosition}
+        endPosition={animationEndPosition}
+        onComplete={handleAnimationComplete}
+      />
       {/* Botón de retroceso */}
       <button
         onClick={handleBack}
@@ -148,7 +269,11 @@ const ProductDetailPage = () => {
             )}
           </div>
 
-          <button className="w-full bg-amber-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-amber-700">
+          <button
+            ref={addToCartButtonRef}
+            onClick={handleAddToCart}
+            className="w-full bg-amber-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-amber-700"
+          >
             <ShoppingCart className="h-5 w-5" />
             Agregar al carrito
           </button>
@@ -283,7 +408,11 @@ const ProductDetailPage = () => {
               </div>
             </div>
 
-            <button className="mt-auto w-full bg-amber-600 text-white py-4 rounded-xl flex items-center justify-center gap-2 text-lg hover:bg-amber-700">
+            <button
+              ref={addToCartButtonRef}
+              onClick={handleAddToCart}
+              className="mt-auto w-full bg-amber-600 text-white py-4 rounded-xl flex items-center justify-center gap-2 text-lg hover:bg-amber-700"
+            >
               <ShoppingCart className="h-6 w-6" />
               Agregar al carrito
             </button>
@@ -331,14 +460,31 @@ const ProductDetailPage = () => {
       </div>
 
       <style>{`
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-      `}</style>
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  
+  @keyframes cartBounce {
+    0% { transform: scale(1); }
+    20% { transform: scale(1.2); }
+    40% { transform: scale(0.9); }
+    60% { transform: scale(1.1); }
+    80% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+  
+  .animate-cartBounce {
+    animation: cartBounce 0.5s ease-in-out;
+  }
+  
+  .toast-success {
+    background-color: #10B981 !important;
+  }
+`}</style>
     </div>
   );
 };
