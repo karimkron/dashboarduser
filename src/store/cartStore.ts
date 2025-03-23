@@ -24,6 +24,9 @@ interface CartStore {
   removeFromCart: (itemId: string) => Promise<void>;
   confirmPickup: (itemId: string) => Promise<void>;
   updateQuantity: (itemId: string, quantity: number) => Promise<void>;
+  fetchPickups: () => Promise<any>;
+  cancelPickup: (pickupId: string) => Promise<void>;
+  cancelAllPickups: () => Promise<void>;
 }
 
 const saveCartToLocalStorage = (cartItems: CartItem[]) => {
@@ -84,14 +87,26 @@ export const useCartStore = create<CartStore>((set) => ({
 
   removeFromCart: async (itemId) => {
     try {
-      await api.delete(`/api/cart/remove/${itemId}`);
+      const response = await api.delete(`/api/cart/remove/${itemId}`);
       set((state) => {
         const updatedCart = state.cartItems.filter(item => item._id !== itemId);
         saveCartToLocalStorage(updatedCart);
         return { cartItems: updatedCart };
       });
+      
+      // Si quieres mostrar un mensaje informativo cuando se elimina un producto pendiente de recoger
+      const responseData = response.data as { wasPickupPending: boolean };
+      if (responseData.wasPickupPending) {
+        await Swal.fire({
+          title: 'Pedido cancelado',
+          text: 'Tu pedido pendiente de recogida ha sido cancelado',
+          icon: 'info',
+          confirmButtonColor: '#f59e0b'
+        });
+      }
     } catch (error) {
       console.error('Error removing item:', error);
+      await Swal.fire('Error', 'No se pudo eliminar el producto del carrito', 'error');
     }
   },
 
@@ -109,10 +124,65 @@ export const useCartStore = create<CartStore>((set) => ({
 
   confirmPickup: async (itemId) => {
     try {
-      await api.put(`/api/cart/confirm/${itemId}`);
+      const response = await api.put(`/api/cart/confirm/${itemId}`);
+      
+      // Mostrar mensaje de éxito con el mensaje recibido del servidor
+      await Swal.fire({
+        title: '¡Pedido confirmado!',
+        text: (response.data as { message: string }).message || 'Recoge tu pedido en el local en tu próxima visita',
+        icon: 'success',
+        confirmButtonColor: '#f59e0b'
+      });
+      
       await useCartStore.getState().fetchCart();
     } catch (error) {
       console.error('Error confirming pickup:', error);
+      await Swal.fire('Error', 'No se pudo confirmar la recogida', 'error');
     }
+  },
+
+  // Añadir a cartStore.ts:
+  confirmAllItems: async () => {
+    try {
+      const response = await api.post<{ success: boolean }>('/api/cart/confirm-all');
+      if (response.data.success) {
+        set((state) => ({
+          ...state,
+          cartItems: state.cartItems.filter(item => item.status !== 'confirmed')
+        }));
+      }
+      return response.data;
+    } catch (error) {
+      console.error('Error confirming all items:', error);
+      throw error;
+    }
+  },
+
+fetchPickups: async () => {
+  try {
+    const response = await api.get('/api/cart/pickups');
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching pickups:', error);
+    throw error;
   }
+},
+
+cancelPickup: async (pickupId: string) => {
+  try {
+    await api.delete(`/api/cart/pickups/${pickupId}`);
+  } catch (error) {
+    console.error('Error canceling pickup:', error);
+    throw error;
+  }
+},
+
+cancelAllPickups: async () => {
+  try {
+    await api.delete('/api/cart/pickups');
+  } catch (error) {
+    console.error('Error canceling all pickups:', error);
+    throw error;
+  }
+},
 }));

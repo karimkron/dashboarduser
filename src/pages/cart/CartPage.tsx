@@ -52,6 +52,41 @@ const CartPage = () => {
     }
   };
 
+  const handleConfirmAllItems = async () => {
+    try {
+      const pendingItems = cartItems.filter(item => item.status !== "confirmed");
+      if (pendingItems.length === 0) {
+        await Swal.fire("Info", "No hay productos pendientes para confirmar", "info");
+        return;
+      }
+
+      const result = await Swal.fire({
+        title: "¿Confirmar todos los pedidos?",
+        text: "Estos artículos estarán listos para recoger en tu próxima visita",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Sí, confirmar todos",
+        cancelButtonText: "Cancelar"
+      });
+
+      if (result.isConfirmed) {
+        // Confirmar cada artículo pendiente
+        for (const item of pendingItems) {
+          if (item.product && typeof item.product !== 'string' && item.product.stock >= item.quantity) {
+            await confirmPickup(item._id);
+          }
+        }
+        await Swal.fire("¡Éxito!", "Todos los pedidos disponibles han sido confirmados", "success");
+        await fetchCart(); // Recargar el carrito
+      }
+    } catch (error) {
+      console.error(error);
+      await Swal.fire("Error", "No se pudieron confirmar todos los pedidos", "error");
+    }
+  };
+
   const handleUpdateQuantity = async (itemId: string, newQuantity: number) => {
     try {
       await updateQuantity(itemId, newQuantity);
@@ -101,25 +136,35 @@ const CartPage = () => {
               <span className="text-xl font-bold">{subtotal.toFixed(2)} €</span>
             </div>
             <div className="flex justify-end">
-              <Link
-                to="/checkout"
-                className="bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-6 rounded-full"
+              <button
+                onClick={handleConfirmAllItems}
+                className="bg-amber-500 hover:bg-amber-600 text-white font-medium py-2 px-6 rounded-full mr-2"
               >
-                Tramitar pedido
+                Confirmar pedidos
+              </button>
+              <Link
+                to="/dashboard/pickups"
+                className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-6 rounded-full"
+              >
+                Ver pedidos confirmados
               </Link>
             </div>
           </div>
 
           <div className="space-y-4">
-            {cartItems.map((item) => {
-              if (!item.product || typeof item.product === 'string') return null;
-              
+            {cartItems.filter(item => item.status !== "confirmed").map((item) => {
+              if (!item.product || typeof item.product === "string")
+                return null;
+
               return (
-                <div key={item._id} className="bg-white p-4 rounded-lg shadow-sm">
+                <div
+                  key={item._id}
+                  className="bg-white p-4 rounded-lg shadow-sm"
+                >
                   <div className="w-24 h-24 flex-shrink-0 mx-auto md:mx-0">
-                    <img 
-                      src={item.product.mainImage || '/default-product.png'} 
-                      alt={item.product.name || 'Producto sin nombre'} 
+                    <img
+                      src={item.product.mainImage || "/default-product.png"}
+                      alt={item.product.name || "Producto sin nombre"}
                       className="w-full h-full object-contain"
                     />
                   </div>
@@ -160,14 +205,20 @@ const CartPage = () => {
                     <div className="flex flex-wrap items-center gap-4 mt-3">
                       <div className="flex items-center border rounded-md">
                         <button
-                          onClick={() => handleUpdateQuantity(item._id, item.quantity - 1)}
+                          onClick={() =>
+                            handleUpdateQuantity(item._id, item.quantity - 1)
+                          }
                           disabled={item.quantity <= 1}
                         >
                           <Minus className="h-4 w-4" />
                         </button>
-                        <span className="px-4 py-1 border-x">{item.quantity}</span>
+                        <span className="px-4 py-1 border-x">
+                          {item.quantity}
+                        </span>
                         <button
-                          onClick={() => handleUpdateQuantity(item._id, item.quantity + 1)}
+                          onClick={() =>
+                            handleUpdateQuantity(item._id, item.quantity + 1)
+                          }
                           disabled={item.product.stock <= item.quantity}
                         >
                           <Plus className="h-4 w-4" />
@@ -175,7 +226,9 @@ const CartPage = () => {
                       </div>
 
                       <button
-                        onClick={() => handleRemoveItem(item._id, item.product.name)}
+                        onClick={() =>
+                          handleRemoveItem(item._id, item.product.name)
+                        }
                         className="flex items-center gap-1 text-red-600 hover:text-red-700 text-sm"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -189,12 +242,16 @@ const CartPage = () => {
                           disabled={item.product.stock < item.quantity}
                         >
                           <CheckCircle className="h-4 w-4" />
-                          <span className="hidden md:inline">Confirmar recogida</span>
+                          <span className="hidden md:inline">
+                            Confirmar recogida
+                          </span>
                         </button>
                       ) : (
                         <span className="flex items-center gap-1 text-sm text-green-600">
                           <CheckCircle className="h-4 w-4" />
-                          <span className="hidden md:inline">Recogida confirmada</span>
+                          <span className="hidden md:inline">
+                            Pendiente de recoger
+                          </span>
                         </span>
                       )}
                     </div>
@@ -205,8 +262,10 @@ const CartPage = () => {
                       {(item.product.price || 0).toFixed(2)} €
                     </span>
                     <p className="text-sm text-gray-500">
-                      ({item.quantity} {item.quantity === 1 ? "unidad" : "unidades"}:{" "}
-                      {((item.product.price || 0) * item.quantity).toFixed(2)} €)
+                      ({item.quantity}{" "}
+                      {item.quantity === 1 ? "unidad" : "unidades"}:{" "}
+                      {((item.product.price || 0) * item.quantity).toFixed(2)}{" "}
+                      €)
                     </p>
                   </div>
                 </div>

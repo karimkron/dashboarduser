@@ -20,6 +20,7 @@ import ProductsPage from "../pages/Products/ProductsPage";
 import ServiceDetailPage from "../pages/services/components/ServiceDetailPage";
 import ProductDetailPage from "../pages/Products/components/ProductDetailPage";
 import CartPage from "../pages/cart/CartPage";
+import PickupsPage from "../pages/pickups/PickupsPage";
 
 // Componente para proteger rutas que requieren autenticación
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -101,6 +102,16 @@ const AppRoutes = () => {
             <ProtectedRoute>
               <DashboardLayout>
                 <CartPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/pickups"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <PickupsPage />
               </DashboardLayout>
             </ProtectedRoute>
           }
