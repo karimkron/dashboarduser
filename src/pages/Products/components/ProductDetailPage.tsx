@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import { ChevronLeft, ShoppingCart } from "lucide-react";
 import { useProductsStore } from "../../../store/productsStore";
 import { toast } from "react-toastify";
 import { useCartStore } from "../../../store/cartStore";
@@ -30,6 +30,7 @@ const ProductDetailPage = () => {
     Product[]
   >([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   // Estado para la animación
   const [isAnimating, setIsAnimating] = useState(false);
@@ -222,36 +223,48 @@ const handleAddToCart = async () => {
       <div className="md:hidden p-4">
         {/* Galería de imágenes */}
         <div className="relative mb-4">
-          <div className="relative pt-[100%] overflow-hidden rounded-lg">
-            {product.images.map((img, index) => (
+          <div className="relative pt-[100%] overflow-hidden rounded-lg cursor-pointer" onClick={() => setIsImageModalOpen(true)}>
+            {[product.mainImage, ...product.images].map((img, index) => (
               <img
-                key={index}
-                src={img}
-                alt={product.name}
-                className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
-                  index === currentImageIndex ? "opacity-100" : "opacity-0"
-                }`}
+          key={index}
+          src={img}
+          alt={product.name}
+          className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-300 ${
+            index === currentImageIndex ? "opacity-100" : "opacity-0"
+          }`}
               />
             ))}
           </div>
 
           {product.images.length > 1 && (
-            <>
-              <button
-                onClick={handlePrevImage}
-                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow"
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </button>
-              <button
-                onClick={handleNextImage}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 p-1 rounded-full shadow"
-              >
-                <ChevronRight className="h-6 w-6" />
-              </button>
-            </>
+            <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-2">
+              {product.images.map((_, index) => (
+          <div
+            key={index}
+            className={`h-2 w-2 rounded-full ${
+              index === currentImageIndex ? "bg-amber-600" : "bg-white/50"
+            }`}
+          />
+              ))}
+            </div>
           )}
         </div>
+
+        {isImageModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+            <button
+              onClick={() => setIsImageModalOpen(false)}
+              className="absolute top-4 right-4 text-white text-3xl"
+            >
+              &times;
+            </button>
+            <img
+              src={product.images[currentImageIndex]}
+              alt={product.name}
+              className="max-w-full max-h-full"
+            />
+          </div>
+        )}
 
         {/* Información del producto */}
         <div className="bg-white rounded-lg p-4 shadow-sm">

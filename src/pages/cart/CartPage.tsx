@@ -183,77 +183,82 @@ const CartPage = () => {
 
                     <div className="mb-2">
                       {item.product.stock > 0 ? (
-                        item.product.stock < 6 ? (
-                          <span className="flex items-center gap-1 text-sm font-bold text-amber-600">
-                            <AlertTriangle className="h-4 w-4" />
-                            Solo quedan {item.product.stock} unidades
-                          </span>
-                        ) : (
-                          <span className="flex items-center gap-1 text-sm font-bold text-green-600">
-                            <CheckCircle className="h-4 w-4" />
-                            En stock ({item.product.stock} disponibles)
-                          </span>
-                        )
-                      ) : (
-                        <span className="flex items-center gap-1 text-sm font-bold text-red-600">
-                          <AlertTriangle className="h-4 w-4" />
-                          Sin stock
+                      item.product.stock < 6 ? (
+                        <span className="flex items-center gap-1 text-sm font-bold text-amber-600">
+                        <AlertTriangle className="h-4 w-4" />
+                        Solo quedan {item.product.stock} unidades
                         </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-sm font-bold text-green-600">
+                        <CheckCircle className="h-4 w-4" />
+                        En stock
+                        </span>
+                      )
+                      ) : (
+                      <span className="flex items-center gap-1 text-sm font-bold text-red-600">
+                        <AlertTriangle className="h-4 w-4" />
+                        Sin stock
+                      </span>
                       )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-4 mt-3">
-                      <div className="flex items-center border rounded-md">
+                        <div className="flex items-center border rounded-md">
                         <button
                           onClick={() =>
-                            handleUpdateQuantity(item._id, item.quantity - 1)
+                          handleUpdateQuantity(item._id, item.quantity - 1)
                           }
                           disabled={item.quantity <= 1}
+                          className="p-2"
                         >
-                          <Minus className="h-4 w-4" />
+                          <Minus className="h-5 w-5" />
                         </button>
-                        <span className="px-4 py-1 border-x">
+                        <span className="px-4 py-2 border-x">
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() =>
-                            handleUpdateQuantity(item._id, item.quantity + 1)
+                          onClick={async () => {
+                          if (item.product.stock <= item.quantity) {
+                            await Swal.fire("Info", "No queda más stock", "info");
+                          } else {
+                            handleUpdateQuantity(item._id, item.quantity + 1);
                           }
-                          disabled={item.product.stock <= item.quantity}
+                          }}
+                          className="p-2"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-5 w-5" />
                         </button>
-                      </div>
+                        </div>
 
-                      <button
+                        <button
                         onClick={() =>
                           handleRemoveItem(item._id, item.product.name)
                         }
-                        className="flex items-center gap-1 text-red-600 hover:text-red-700 text-sm"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="hidden md:inline">Eliminar</span>
-                      </button>
+                        className="flex items-center gap-1 text-red-600 hover:text-red-700 text-base"
+                        >
+                        <Trash2 className="h-5 w-5" />
+                        <span>Eliminar</span>
+                        </button>
 
-                      {item.status !== "confirmed" ? (
+                        {item.status !== "confirmed" ? (
                         <button
                           onClick={() => confirmPickup(item._id)}
-                          className="flex items-center gap-1 text-sm text-amber-600 hover:text-amber-700"
+                          className="flex items-center gap-1 text-base text-amber-600 hover:text-amber-700"
                           disabled={item.product.stock < item.quantity}
                         >
-                          <CheckCircle className="h-4 w-4" />
+                          <CheckCircle className="h-5 w-5" />
                           <span className="hidden md:inline">
-                            Confirmar recogida
+                          Confirmar pedido
                           </span>
                         </button>
-                      ) : (
-                        <span className="flex items-center gap-1 text-sm text-green-600">
-                          <CheckCircle className="h-4 w-4" />
+                        ) : (
+                        <span className="flex items-center gap-1 text-base text-green-600">
+                          <CheckCircle className="h-5 w-5" />
                           <span className="hidden md:inline">
-                            Pendiente de recoger
+                          Pendiente de recoger
                           </span>
                         </span>
-                      )}
+                        )}
                     </div>
                   </div>
 
