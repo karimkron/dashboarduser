@@ -364,7 +364,7 @@ const ProductDetailPage = () => {
                       className={`h-2 w-8 rounded-full ${
                         index === currentImageIndex
                           ? "bg-amber-600"
-                          : "bg-white/50"
+                          : "bg-zinc-700/70"
                       }`}
                     />
                   ))}

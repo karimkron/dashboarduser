@@ -8,7 +8,7 @@ import DashboardLayout from "../components/layout/DashboardLayout";
 import ProfilePage from "../pages/profile/ProfilePage";
 import NotificationsPage from "../pages/notifications/NotificationsPage";
 import ServicesPage from "../pages/services/ServicesPage";
-import AppointmentsPage from "../pages/appointments/AppointmentsPage";
+import AppointmentsPage from "../pages/appointments/AppointmentBookingPage";
 import SettingsPage from "../pages/settings/SettingsPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import LoginPage from "../pages/auth/LoginPage";
@@ -21,6 +21,7 @@ import ServiceDetailPage from "../pages/services/components/ServiceDetailPage";
 import ProductDetailPage from "../pages/Products/components/ProductDetailPage";
 import CartPage from "../pages/cart/CartPage";
 import PickupsPage from "../pages/pickups/PickupsPage";
+import AppointmentBookingPage from "../pages/appointments/AppointmentBookingPage";
 
 // Componente para proteger rutas que requieren autenticación
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -142,6 +143,16 @@ const AppRoutes = () => {
             <ProtectedRoute>
               <DashboardLayout>
                 <ServicesPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/services/:serviceId/book"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <AppointmentBookingPage />
               </DashboardLayout>
             </ProtectedRoute>
           }

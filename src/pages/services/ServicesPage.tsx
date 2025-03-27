@@ -3,39 +3,31 @@ import { Search, ChevronRight, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useServiceStore } from "../../store/serviceStore";
 
-
 const ServicesPage = () => {
   const { services, categories, loading, error, fetchServices } =
     useServiceStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredServices, setFilteredServices] = useState<any[]>([]);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   // Fetch services on component mount
   useEffect(() => {
     fetchServices();
   }, [fetchServices]);
 
-  // Filter services based on search query
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredServices(services);
       return;
     }
-
     const normalizedQuery = searchQuery.toLowerCase().trim();
     const filtered = services.filter((service) => {
-      const nameMatch = service.name.toLowerCase().includes(normalizedQuery);
-      const descMatch = service.description
-        .toLowerCase()
-        .includes(normalizedQuery);
-      const categoryMatch = service.category
-        .toLowerCase()
-        .includes(normalizedQuery);
-
-      return nameMatch || descMatch || categoryMatch;
+      return (
+        service.name.toLowerCase().includes(normalizedQuery) ||
+        service.description.toLowerCase().includes(normalizedQuery) ||
+        service.category.toLowerCase().includes(normalizedQuery)
+      );
     });
-
     setFilteredServices(filtered);
   }, [searchQuery, services]);
 
@@ -67,6 +59,10 @@ const ServicesPage = () => {
   const newServices = {
     name: "Nuevos Servicios",
     services: [...filteredServices].sort(() => 0.5 - Math.random()).slice(0, 8),
+  };
+
+  const handleServiceClick = (serviceId: string) => {
+    navigate(`/dashboard/services/${serviceId}`);
   };
 
   if (loading) {
@@ -118,67 +114,69 @@ const ServicesPage = () => {
 
         {filteredServices.length === 0 ? (
           <div className="text-center py-8">
-        <p className="text-gray-600">
-          No se encontraron servicios que coincidan con tu búsqueda.
-        </p>
+            <p className="text-gray-600">
+              No se encontraron servicios que coincidan con tu búsqueda.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {filteredServices.map((service) => (
-          <div
-            key={service._id}
-            className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full"
-          >
-            <div className="relative pt-[100%]">
-          <img
-            src={service.image || "https://placehold.co/300x200"}
-            alt={service.name}
-            className="absolute top-0 left-0 w-full h-full object-cover"
-          />
-            </div>
-            <div className="p-3 flex-grow">
-          <h3 className="font-medium text-gray-800 truncate">
-            {service.name}
-          </h3>
-          <p className="text-gray-500 text-sm line-clamp-2 h-10">
-            {service.description}
-          </p>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="text-xl font-bold text-gray-900">
-              {service.price.toFixed(2)} €
-            </span>
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4 text-gray-400" />
-              <span className="text-xs text-gray-600">
-            {service.duration} min
-              </span>
-            </div>
-          </div>
-          <div className="mt-2">
-            <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
-              {service.category}
-            </span>
-            <span className="inline-block bg-green-100 text-green-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
-              Puntos: {service.points}
-            </span>
-          </div>
-            </div>
-            <button
-          onClick={() =>
-            navigate(`/dashboard/services/${service._id}`)
-          }
-          className="mt-auto w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
-            >
-          Reservar
-            </button>
-          </div>
-        ))}
+            {filteredServices.map((service) => (
+              <div
+                key={service._id}
+                onClick={() => handleServiceClick(service._id)}
+                className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full cursor-pointer"
+              >
+                <div className="relative pt-[100%]">
+                  <img
+                    src={service.image || "https://placehold.co/300x200"}
+                    alt={service.name}
+                    className="absolute top-0 left-0 w-full h-full object-cover"
+                  />
+                </div>
+                <div className="p-3 flex-grow">
+                  <h3 className="font-medium text-gray-800 truncate">
+                    {service.name}
+                  </h3>
+                  <p className="text-gray-500 text-sm line-clamp-2 h-10">
+                    {service.description}
+                  </p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-xl font-bold text-gray-900">
+                      {service.price.toFixed(2)} €
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                      <span className="text-xs text-gray-600">
+                        {service.duration} min
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
+                      {service.category}
+                    </span>
+                    <span className="inline-block bg-green-100 text-green-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
+                      Puntos: {service.points}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleServiceClick(service._id);
+                  }}
+                  className="mt-auto w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                >
+                  Reservar
+                </button>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-       {/* Mobile View Actualizado */}
-       <div className="md:hidden">
+      {/* Mobile View Actualizado */}
+      <div className="md:hidden">
         {filteredServices.length === 0 ? (
           <div className="text-center py-8 px-4">
             <p className="text-gray-600">
@@ -191,16 +189,16 @@ const ServicesPage = () => {
             <div className="bg-white">
               <div className="flex items-center justify-between px-4 py-3">
                 <h2 className="font-bold text-lg">{newServices.name}</h2>
-                <button className="text-amber-500 text-sm flex items-center">
+                <button className="text-amber-500 text-sm flex items-center hover:text-amber-600 transition-colors">
                   Ver más <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
               <div className="flex overflow-x-auto pb-4 px-4 space-x-3 hide-scrollbar">
                 {newServices.services.map((service) => (
-                  <div 
-                    key={service._id} 
+                  <div
+                    key={service._id}
                     className="flex-shrink-0 w-32"
-                    onClick={() => navigate(`/dashboard/services/${service._id}`)}
+                    onClick={() => handleServiceClick(service._id)}
                   >
                     <div className="bg-white rounded-lg overflow-hidden border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
                       <div className="relative pt-[100%]">
@@ -237,16 +235,16 @@ const ServicesPage = () => {
             <div className="bg-white">
               <div className="flex items-center justify-between px-4 py-3">
                 <h2 className="font-bold text-lg">{featuredServices.name}</h2>
-                <button className="text-amber-500 text-sm flex items-center">
+                <button className="text-amber-500 text-sm flex items-center hover:text-amber-600 transition-colors">
                   Ver más <ChevronRight className="h-4 w-4" />
                 </button>
               </div>
               <div className="flex overflow-x-auto pb-4 px-4 space-x-3 hide-scrollbar">
                 {featuredServices.services.map((service) => (
-                  <div 
-                    key={service._id} 
+                  <div
+                    key={service._id}
                     className="flex-shrink-0 w-32"
-                    onClick={() => navigate(`/dashboard/services/${service._id}`)}
+                    onClick={() => handleServiceClick(service._id)}
                   >
                     <div className="bg-white rounded-lg overflow-hidden border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
                       <div className="relative pt-[100%]">
@@ -285,21 +283,23 @@ const ServicesPage = () => {
                 <div key={categoryId} className="bg-white">
                   <div className="flex items-center justify-between px-4 py-3">
                     <h2 className="font-bold text-lg">{category.name}</h2>
-                    <button className="text-amber-500 text-sm flex items-center">
+                    <button className="text-amber-500 text-sm flex items-center hover:text-amber-600 transition-colors">
                       Ver más <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="flex overflow-x-auto pb-4 px-4 space-x-3 hide-scrollbar">
                     {category.services.map((service) => (
-                      <div 
-                        key={service._id} 
+                      <div
+                        key={service._id}
                         className="flex-shrink-0 w-32"
-                        onClick={() => navigate(`/dashboard/services/${service._id}`)}
+                        onClick={() => handleServiceClick(service._id)}
                       >
                         <div className="bg-white rounded-lg overflow-hidden border border-gray-100 cursor-pointer hover:shadow-md transition-shadow">
                           <div className="relative pt-[100%]">
                             <img
-                              src={service.image || "https://placehold.co/300x200"}
+                              src={
+                                service.image || "https://placehold.co/300x200"
+                              }
                               alt={service.name}
                               className="absolute top-0 left-0 w-full h-full object-cover"
                             />

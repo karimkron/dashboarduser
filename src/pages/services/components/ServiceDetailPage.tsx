@@ -2,75 +2,174 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Clock, ChevronLeft } from 'lucide-react';
 import { useServiceStore } from '../../../store/serviceStore';
+import { useAppointmentStore } from '../../../store/appointment.store';
+
+// Loading Skeleton Component
+const ServiceDetailSkeleton = () => (
+  <div className="pt-16 pb-20 md:pt-20 lg:pb-0 bg-gray-50 animate-pulse">
+    <div className="p-4 md:flex md:gap-8">
+      <div className="md:w-1/3">
+        <div className="relative pt-[80%] bg-gray-300 rounded-xl"></div>
+      </div>
+      
+      <div className="md:w-2/3 mt-4 md:mt-0">
+        <div className="h-10 bg-gray-300 mb-4 rounded w-3/4"></div>
+        <div className="h-6 bg-gray-300 mb-6 rounded w-full"></div>
+        
+        <div className="flex justify-between items-center mb-6">
+          <div className="h-8 bg-gray-300 rounded w-1/4"></div>
+          <div className="h-6 bg-gray-300 rounded w-1/4"></div>
+        </div>
+        
+        <div className="h-8 bg-gray-300 rounded w-1/3 mb-6"></div>
+        
+        <div className="h-12 bg-gray-300 rounded w-full"></div>
+      </div>
+    </div>
+  </div>
+);
 
 const ServiceDetailPage = () => {
   const { serviceId } = useParams();
   const navigate = useNavigate();
-  const { services } = useServiceStore();
+  const { services, fetchServices } = useServiceStore();
+  const { addService } = useAppointmentStore();
+  
   const [service, setService] = useState<any>(null);
   const [sameCategoryServices, setSameCategoryServices] = useState<any[]>([]);
   const [otherCategoriesServices, setOtherCategoriesServices] = useState<{ [key: string]: any[] }>({});
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
-      window.scrollTo(0, 0);
-      const selectedService = services.find(s => s._id === serviceId);
-      
-      if (selectedService) {
-        setService(selectedService);
+      try {
+        window.scrollTo(0, 0);
+        setIsLoading(true);
         
-        const sameCategory = services.filter(s => 
-          s.category === selectedService.category && 
-          s._id !== selectedService._id
-        );
+        // Attempt to fetch services if not loaded
+        if (services.length === 0) {
+          await fetchServices();
+        }
+
+        // Check local storage first
+        const storedServiceData = localStorage.getItem('serviceDetailPageData');
+        let parsedStoredData = null;
+        
+        try {
+          parsedStoredData = storedServiceData ? JSON.parse(storedServiceData) : null;
+        } catch (parseError) {
+          console.error('Error parsing stored service data:', parseError);
+        }
+
+        // Find current service
+        let currentService = services.find(s => s._id === serviceId);
+
+        // If not found in current services, try stored data
+        if (!currentService && parsedStoredData) {
+          currentService = parsedStoredData.service;
+        }
+
+        // If still no service, throw error
+        if (!currentService) {
+          throw new Error('Service not found');
+        }
+
+        // Prepare related services
+        const sameCategory = services.length > 0 
+          ? services.filter(s => 
+              s.category === currentService.category && 
+              s._id !== currentService._id
+            )
+          : (parsedStoredData?.sameCategoryServices || []);
+
+        const otherCategories = services.length > 0
+          ? services.filter(s => 
+              s.category !== currentService.category
+            ).reduce((acc: { [key: string]: any[] }, service) => {
+              if (!acc[service.category]) {
+                acc[service.category] = [];
+              }
+              acc[service.category].push(service);
+              return acc;
+            }, {})
+          : (parsedStoredData?.otherCategoriesServices || {});
+
+        // Update state
+        setService(currentService);
         setSameCategoryServices(sameCategory);
-        
-        const otherCategories = services.filter(s => 
-          s.category !== selectedService.category
-        ).reduce((acc: { [key: string]: any[] }, service) => {
-          if (!acc[service.category]) {
-            acc[service.category] = [];
-          }
-          acc[service.category].push(service);
-          return acc;
-        }, {});
-        
         setOtherCategoriesServices(otherCategories);
+
+        // Store data for page reload
+        localStorage.setItem('serviceDetailPageData', JSON.stringify({
+          service: currentService,
+          sameCategoryServices: sameCategory,
+          otherCategoriesServices: otherCategories
+        }));
+        
+        setIsLoading(false);
+      } catch (err) {
+        console.error(err);
+        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+        setIsLoading(false);
       }
     };
 
+    // If services are not loaded, fetch them first
     if (services.length === 0) {
-      // Si no hay servicios, redirigir después de un tiempo
-      const timer = setTimeout(() => navigate('/dashboard/services'), 2000);
-      return () => clearTimeout(timer);
+      fetchServices().then(loadData);
     } else {
       loadData();
     }
-  }, [serviceId, services, navigate]);
+  }, [serviceId, services, navigate, fetchServices]);
 
   const handleBack = () => {
-    navigate(-1); // Navegar a la página anterior
+    navigate(-1);
   };
 
-  if (!service) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-600"></div>
-      </div>
-    );
-  }
+  const handleBookService = () => {
+    if (service) {
+      addService(service);
+      navigate('/dashboard/appointments');
+    }
+  };
 
   const handleServiceClick = (id: string) => {
     navigate(`/dashboard/services/${id}`);
     window.scrollTo(0, 0);
   };
 
+  // Error State
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Error</h2>
+          <p className="text-gray-700 mb-6">{error}</p>
+          <button 
+            onClick={() => navigate('/dashboard/services')}
+            className="bg-amber-600 text-white px-6 py-3 rounded-lg hover:bg-amber-700"
+          >
+            Volver a Servicios
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading State
+  if (isLoading) {
+    return <ServiceDetailSkeleton />;
+  }
+
+  // Rest of the component remains the same as in the previous implementation
+  // (Full mobile and desktop view code)
   return (
     <div className="pt-16 pb-20 md:pt-20 lg:pb-0 bg-gray-50 ">
-      {/* Botón de retroceso */}
+      {/* Existing code from previous implementation */}
       <button 
         onClick={handleBack}
-        className="fixed top-3 left-4 z-50 p-2 bg-white   rounded-full shadow-lg hover:bg-gray-50 md:hidden"
+        className="fixed top-3 left-4 z-50 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 md:hidden"
       >
         <ChevronLeft className="h-6 w-6 text-gray-600" />
       </button>
@@ -106,7 +205,10 @@ const ServiceDetailPage = () => {
               Puntos: {service.points}
             </span>
           </div>
-          <button className="w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700">
+          <button 
+            onClick={handleBookService}
+            className="w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700"
+          >
             Reservar cita
           </button>
         </div>
@@ -185,6 +287,7 @@ const ServiceDetailPage = () => {
 
       {/* Desktop View */}
       <div className="hidden md:block p-4">
+        {/* (Rest of the desktop view code remains the same as in previous implementation) */}
         <div className="flex gap-8">
           <div className="w-1/3">
             <div className="relative pt-[80%] rounded-xl overflow-hidden shadow-lg">
@@ -214,7 +317,10 @@ const ServiceDetailPage = () => {
               </span>
             </div>
             
-            <button className="w-full bg-amber-600 text-white px-6 py-3 rounded-xl hover:bg-amber-700 transition-colors text-lg">
+            <button 
+              onClick={handleBookService}
+              className="w-full bg-amber-600 text-white px-6 py-3 rounded-xl hover:bg-amber-700 transition-colors text-lg"
+            >
               Reservar cita
             </button>
           </div>
@@ -308,6 +414,7 @@ const ServiceDetailPage = () => {
         </div>
       </div>
 
+      {/* Hide scrollbar styles */}
       <style>{`
         .hide-scrollbar {
           -ms-overflow-style: none;
