@@ -45,6 +45,7 @@ export const useUserStore = create<UserState>((set) => ({
   updateProfile: async (data) => {
     try {
       set({ loading: true, error: null });
+      // Usar nueva ruta
       const response = await api.put<UserProfile>('/api/users/me', data);
       set({ profile: response.data, loading: false });
       return Promise.resolve();
@@ -61,6 +62,7 @@ export const useUserStore = create<UserState>((set) => ({
   updatePassword: async (currentPassword, newPassword) => {
     try {
       set({ loading: true, error: null });
+      // Usar nueva ruta
       await api.put('/api/users/me/password', { 
         currentPassword, 
         newPassword 

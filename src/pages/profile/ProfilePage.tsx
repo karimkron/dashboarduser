@@ -1,15 +1,19 @@
 // src/pages/profile/ProfilePage.tsx
 import { useState, useEffect } from 'react';
-import { Award, BadgeCheck, Calendar, Clock } from 'lucide-react';
+import { Award, BadgeCheck, Calendar, Clock, LogOut } from 'lucide-react';
 import ProfileHeader from './components/ProfileHeader';
 import { useUserStore } from '../../store/user.store';
+import { useAuthStore } from '../../store/auth.store';
 import PersonalInfoModal from '../../components/modals/PersonalInfoModal';
 import PasswordModal from '../../components/modals/PasswordModal';
 import { ToastContainer } from 'react-toastify';
+import { useNavigate } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 
 const ProfilePage = () => {
   const { profile, loading, error, fetchProfile } = useUserStore();
+  const { logout } = useAuthStore();
+  const navigate = useNavigate();
   const [showPersonalInfoModal, setShowPersonalInfoModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   
@@ -17,6 +21,12 @@ const ProfilePage = () => {
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
+
+  // Función para manejar el cierre de sesión
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   return (
     <div className="pt-14">
@@ -131,6 +141,17 @@ const ProfilePage = () => {
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Botón de Cerrar Sesión */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+            >
+              <LogOut className="h-5 w-5" />
+              Cerrar Sesión
+            </button>
           </div>
         </div>
       </div>

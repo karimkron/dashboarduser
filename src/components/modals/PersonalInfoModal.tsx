@@ -34,17 +34,19 @@ const PersonalInfoModal: React.FC<PersonalInfoModalProps> = ({ isOpen, onClose }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      await updateProfile(formData);
-      toast.success('Información personal actualizada correctamente');
-      onClose();
-    } catch (err) {
-      toast.error('Error al actualizar la información personal');
-    }
-  };
+  // Asumiendo que usas el store de usuario
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  try {
+    // Llamar a la nueva ruta de API
+    await updateProfile(formData);
+    toast.success('Información personal actualizada correctamente');
+    onClose();
+  } catch (err) {
+    toast.error('Error al actualizar la información personal');
+  }
+};
   
   if (!isOpen) return null;
   

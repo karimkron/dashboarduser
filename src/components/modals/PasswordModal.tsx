@@ -66,6 +66,7 @@ const PasswordModal: React.FC<PasswordModalProps> = ({ isOpen, onClose }) => {
     }
     
     try {
+      // Llamar a la nueva ruta de API
       await updatePassword(formData.currentPassword, formData.newPassword);
       toast.success('Contraseña actualizada correctamente');
       setFormData({
