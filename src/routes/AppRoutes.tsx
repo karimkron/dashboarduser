@@ -6,10 +6,8 @@ import {
 } from "react-router-dom";
 import DashboardLayout from "../components/layout/DashboardLayout";
 import ProfilePage from "../pages/profile/ProfilePage";
-import NotificationsPage from "../pages/notifications/NotificationsPage";
 import ServicesPage from "../pages/services/ServicesPage";
 import AppointmentsPage from "../pages/appointments/AppointmentBookingPage";
-import SettingsPage from "../pages/settings/SettingsPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import LoginPage from "../pages/auth/LoginPage";
 import RegisterPage from "../pages/auth/RegisterPage";
@@ -121,16 +119,6 @@ const AppRoutes = () => {
           }
         />
         <Route
-          path="/dashboard/notifications"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <NotificationsPage />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/dashboard/appointments"
           element={
             <ProtectedRoute>
@@ -197,16 +185,6 @@ const AppRoutes = () => {
             <ProtectedRoute>
               <DashboardLayout>
                 <ServiceDetailPage />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/settings"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout>
-                <SettingsPage />
               </DashboardLayout>
             </ProtectedRoute>
           }

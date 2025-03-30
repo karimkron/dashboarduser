@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Home, Calendar, Package, Settings, ShoppingCart } from 'lucide-react';
+import { Home, Calendar, Package, ShoppingCart } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import { useUIStore } from '../../store/uiStore';
@@ -35,7 +35,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const mobileMenuItems = [
     { 
       icon: Home, 
-      label: 'Dashboard', 
+      label: 'Inicio', 
       path: '/dashboard',
     },
     { 
@@ -45,8 +45,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     },
     { 
       icon: Calendar, 
-      label: 'Citas', 
-      path: '/dashboard/appointments',
+      label: 'Historial', 
+      path: '/dashboard/appointment-history',
     },
     { 
       icon: ShoppingCart, 
@@ -54,10 +54,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       path: '/dashboard/products',
     },
     { 
-      icon: Settings, 
-      label: 'Ajustes', 
-      path: '/dashboard/settings',
-    }
+      icon: Calendar, 
+      label: 'Citas', 
+      path: '/dashboard/my-appointments',
+    },
   ];
 
   return (

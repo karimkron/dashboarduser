@@ -1,4 +1,4 @@
-import { Home, Calendar, Package, Settings, Menu, ShoppingCart, ClipboardList, History } from 'lucide-react';
+import { Home, Calendar, Package, Menu, ShoppingCart, ClipboardList, History } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useUIStore } from '../../store/uiStore';
 
@@ -7,13 +7,13 @@ const Sidebar = () => {
   const { isSidebarOpen, toggleSidebar } = useUIStore();
 
   const menuItems = [
-    { title: 'Dashboard', icon: Home, path: '/dashboard' },
+    { title: 'Inicio', icon: Home, path: '/dashboard' },
     { title: 'Tienda', icon: ShoppingCart, path: '/dashboard/products' },
     { title: 'Mis Citas', icon: ClipboardList, path: '/dashboard/my-appointments' },
-    { title: 'Historial de Citas', icon: History, path: '/dashboard/appointment-history' },
-    { title: 'Reservar Cita', icon: Calendar, path: '/dashboard/appointments' },
+    { title: 'Historial', icon: History, path: '/dashboard/appointment-history' },
+    { title: 'Reservar', icon: Calendar, path: '/dashboard/appointments' },
     { title: 'Servicios', icon: Package, path: '/dashboard/services' },
-    { title: 'Configuración', icon: Settings, path: '/dashboard/settings' }
+
   ];
 
   return (

@@ -1,80 +1,165 @@
-import { useState } from 'react';
-  {/*import { Calendar, Award, Clock, Scissors } from 'lucide-react';*/}
+// src/pages/profile/ProfilePage.tsx
+import { useState, useEffect } from 'react';
+import { Award, BadgeCheck, Calendar, Clock } from 'lucide-react';
 import ProfileHeader from './components/ProfileHeader';
-import ProfileStats from './components/ProfileStats';
-import FavoriteLooks from './components/FavoriteLooks';
-import AppointmentHistory from './components/AppointmentHistory';
-import LoyaltyPoints from './components/LoyaltyPoints';
-import PreferredServices from './components/PreferredServices';
+import { useUserStore } from '../../store/user.store';
+import PersonalInfoModal from '../../components/modals/PersonalInfoModal';
+import PasswordModal from '../../components/modals/PasswordModal';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const ProfilePage = () => {
-    const [activeTab, setActiveTab] = useState('overview');
+  const { profile, loading, error, fetchProfile } = useUserStore();
+  const [showPersonalInfoModal, setShowPersonalInfoModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   
-    const tabs = [
-      { id: 'overview', label: 'Vista General' },
-      { id: 'appointments', label: 'Mis Citas' },
-      { id: 'favorites', label: 'Favoritos' },
-      { id: 'points', label: 'Puntos' },
-    ];
-  
-    return (
-      <div className="space-y-6 -m-6"> {/* Agregamos margin negativo */}
-        {/* Cabecera del perfil */}
-        <ProfileHeader />
-  
-        {/* Navegación por pestañas */}
-        <div className="bg-white border-y"> {/* Quitamos rounded y shadow */}
-          <div className="max-w-7xl mx-auto">
-            <nav className="flex overflow-x-auto">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition-colors
-                    ${activeTab === tab.id
-                      ? 'border-amber-600 text-amber-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                    }`}
-                >
-                  {tab.label}
-                </button>
+  // Cargar los datos del perfil cuando se monte el componente
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
+
+  return (
+    <div className="pt-14">
+      {/* Cabecera del perfil */}
+      <div className="max-w-4xl mx-auto px-4 py-6">
+        <ProfileHeader 
+          onEditPersonalInfo={() => setShowPersonalInfoModal(true)}
+          onEditPassword={() => setShowPasswordModal(true)}
+        />
+      </div>
+
+      {/* Stats and Additional Info */}
+      <div className="max-w-4xl mx-auto px-4 pb-6">
+        <div className="bg-white rounded-lg border p-6">
+          <h2 className="text-xl font-bold mb-4">Estadísticas</h2>
+          
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-gray-50 p-4 rounded-lg animate-pulse">
+                  <div className="h-8 w-8 bg-gray-200 rounded-lg mb-2"></div>
+                  <div className="h-5 w-20 bg-gray-200 rounded mb-1"></div>
+                  <div className="h-7 w-12 bg-gray-200 rounded"></div>
+                </div>
               ))}
-            </nav>
+            </div>
+          ) : error ? (
+            <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+              {error}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Cliente desde</p>
+                    <p className="text-xl font-semibold text-gray-900">
+                      {profile?.createdAt ? new Date(profile.createdAt).getFullYear() : '-'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-amber-100 text-amber-600">
+                    <Award className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Puntos</p>
+                    <p className="text-xl font-semibold text-gray-900">
+                      {profile?.points || 0}
+                    </p>
+                  </div>
+                </div>
+              </div> */}
+              
+              {/* <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-green-100 text-green-600">
+                    <BadgeCheck className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Nivel</p>
+                    <p className="text-xl font-semibold text-gray-900">
+                      {profile?.rank ? profile.rank.charAt(0).toUpperCase() + profile.rank.slice(1) : 'Bronce'}
+                    </p>
+                  </div>
+                </div>
+              </div> */}
+              
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-100 text-purple-600">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Estado</p>
+                    <p className="text-xl font-semibold text-gray-900">
+                      {profile?.isVerified ? 'Verificado' : 'Pendiente'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* User Contact Info */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h3 className="text-lg font-medium mb-4">Información de Contacto</h3>
+            
+            {loading ? (
+              <div className="space-y-3">
+                <div className="h-6 bg-gray-200 rounded w-full max-w-md animate-pulse"></div>
+                <div className="h-6 bg-gray-200 rounded w-full max-w-md animate-pulse"></div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="flex items-center">
+                  <span className="font-medium w-24">Teléfono:</span> 
+                  <span>{profile?.phone || 'No disponible'}</span>
+                </p>
+                <p className="flex items-center">
+                  <span className="font-medium w-24">Miembro:</span> 
+                  <span>{profile?.role === 'user' ? 'Cliente' : 
+                         profile?.role === 'admin' ? 'Administrador' : 
+                         profile?.role === 'superadmin' ? 'Super Administrador' : 
+                         profile?.role || 'No disponible'}</span>
+                </p>
+              </div>
+            )}
           </div>
         </div>
-  
-        {/* Contenido de las pestañas */}
-        <div className="max-w-7xl mx-auto px-6">
-          {activeTab === 'overview' && (
-            <div className="grid gap-6 md:grid-cols-2">
-              <ProfileStats />
-              <PreferredServices />
-              <FavoriteLooks />
-              <LoyaltyPoints />
-            </div>
-          )}
-  
-          {activeTab === 'appointments' && (
-            <div className="-mx-6"> {/* Margin negativo para full width */}
-              <AppointmentHistory />
-            </div>
-          )}
-  
-          {activeTab === 'favorites' && (
-            <div className="grid gap-6 md:grid-cols-2">
-              <FavoriteLooks expanded />
-              <PreferredServices expanded />
-            </div>
-          )}
-  
-          {activeTab === 'points' && (
-            <div className="-mx-6"> {/* Margin negativo para full width */}
-              <LoyaltyPoints expanded />
-            </div>
-          )}
-        </div>
       </div>
-    );
-  };
-  
+
+      {/* Modals */}
+      <PersonalInfoModal 
+        isOpen={showPersonalInfoModal} 
+        onClose={() => setShowPersonalInfoModal(false)} 
+      />
+      
+      <PasswordModal 
+        isOpen={showPasswordModal} 
+        onClose={() => setShowPasswordModal(false)} 
+      />
+      
+      <ToastContainer 
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </div>
+  );
+};
+
 export default ProfilePage;

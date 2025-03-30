@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Calendar, Clock, CheckCircle, XCircle, Search, Filter, RefreshCw
+  Calendar, Clock, CheckCircle, XCircle, Filter, RefreshCw
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -28,7 +28,7 @@ const AppointmentHistoryPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('completed,cancelled');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
 
   const fetchAppointmentHistory = async () => {
     setIsLoading(true);
@@ -119,7 +119,7 @@ const AppointmentHistoryPage = () => {
   };
 
   return (
-    <div className="space-y-6 -m-6">
+    <div className="pt-14">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto p-6">
@@ -141,23 +141,10 @@ const AppointmentHistoryPage = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto pt-2 px-6">
         {/* Filters and Search */}
         <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Buscar en historial..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
-            </div>
-            
             <div className="flex items-center gap-2">
               <Filter className="h-5 w-5 text-gray-500" />
               <select
@@ -203,19 +190,14 @@ const AppointmentHistoryPage = () => {
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             {filteredAppointments.map((appointment) => (
               <div
                 key={appointment._id}
                 className="bg-white rounded-lg border overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    {/* Status icon */}
-                    <div className="rounded-full p-2 bg-gray-100 flex-shrink-0">
-                      {getStatusIcon(appointment.status)}
-                    </div>
-                    
+                  <div className="flex items-start gap-2">
                     {/* Main content */}
                     <div className="flex-1">
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
@@ -257,6 +239,10 @@ const AppointmentHistoryPage = () => {
                           <strong>Razón de cancelación:</strong> {appointment.cancellationReason}
                         </div>
                       )}
+                    </div>
+                     {/* Status icon */}
+                     <div className="rounded-full p-2 bg-gray-100 flex-shrink-0">
+                      {getStatusIcon(appointment.status)}
                     </div>
                   </div>
                 </div>

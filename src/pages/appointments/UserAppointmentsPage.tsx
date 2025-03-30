@@ -136,7 +136,7 @@ const UserAppointmentsPage = () => {
   };
 
   return (
-    <div className="space-y-6 -m-6">
+    <div className="pt-11">
       {/* Header */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto p-6">
@@ -158,7 +158,7 @@ const UserAppointmentsPage = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-3 pt-2">
         {/* Loading State */}
         {isLoading ? (
           <div className="flex justify-center items-center py-12">
