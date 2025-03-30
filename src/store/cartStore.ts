@@ -51,7 +51,7 @@ export const useCartStore = create<CartStore>((set) => ({
       const response = await api.get<CartItem[]>('/api/cart');
       
       // Validar y limpiar datos
-      const validatedData = response.data
+      const validatedData = response.data 
         .filter(item => item?.product?._id && item?.product?.price)
         .map(item => ({
           ...item,

@@ -22,6 +22,9 @@ import ProductDetailPage from "../pages/Products/components/ProductDetailPage";
 import CartPage from "../pages/cart/CartPage";
 import PickupsPage from "../pages/pickups/PickupsPage";
 import AppointmentBookingPage from "../pages/appointments/AppointmentBookingPage";
+import AppointmentConfirmationPage from "../pages/appointments/components/AppointmentConfirmationPage";
+import AppointmentHistoryPage from "../pages/appointments/AppointmentHistoryPage";
+import UserAppointmentsPage from "../pages/appointments/UserAppointmentsPage";
 
 // Componente para proteger rutas que requieren autenticación
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -153,6 +156,37 @@ const AppRoutes = () => {
             <ProtectedRoute>
               <DashboardLayout>
                 <AppointmentBookingPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/appointments/confirmation"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <AppointmentConfirmationPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+         <Route
+          path="/dashboard/my-appointments"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <UserAppointmentsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        {/* Nueva ruta para historial de citas */}
+        <Route
+          path="/dashboard/appointment-history"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <AppointmentHistoryPage />
               </DashboardLayout>
             </ProtectedRoute>
           }
