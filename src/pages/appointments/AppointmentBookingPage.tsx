@@ -49,6 +49,8 @@ interface ConfirmationModalProps {
     totalDuration: number;
     totalPrice: number;
   };
+
+
 }
 
 // Componente para mostrar errores
@@ -591,7 +593,7 @@ const AppointmentBookingPage = () => {
     [availabilityData, selectedDate, totalDuration, closingTimes]
   );
 
-  // Manejar envío del formulario
+  // MODIFICACIÓN: Actualizada la función handleSubmit para manejar la respuesta de reprogramación
   const handleSubmit = useCallback(async () => {
     setValidationError(null);
 
@@ -681,7 +683,14 @@ const AppointmentBookingPage = () => {
     }
   }, [selectedDate, selectedTime, selectedServices, totalDuration, setTime]);
 
-  // Confirmar la reserva
+  interface AppointmentResponse {
+    success: boolean;
+    rescheduled?: boolean;
+    message?: string;
+    appointment: any;
+  }
+
+  // MODIFICACIÓN: Actualizada la función confirmAppointment para manejar el caso de citas reprogramadas automáticamente
   const confirmAppointment = useCallback(async () => {
     setIsSubmitting(true);
     setValidationError(null);
@@ -693,17 +702,45 @@ const AppointmentBookingPage = () => {
         time: selectedTime,
       };
 
-      const response = await bookingService.createAppointment(appointmentData);
+      const response = await bookingService.createAppointment(appointmentData) as AppointmentResponse;
 
       setShowConfirmModal(false);
       setSubmissionSuccess(true);
 
-      // Mostrar mensaje de éxito
-      toast.success("¡Tu cita ha sido agendada con éxito!");
+      // MODIFICACIÓN: Verificar si la cita fue reprogramada automáticamente
+      if (response.rescheduled) {
+        // Guardar información de reprogramación en localStorage
+        localStorage.setItem(
+          'appointmentRescheduled',
+          JSON.stringify({
+            wasRescheduled: true,
+            originalDate: format(selectedDate!, "yyyy-MM-dd"),
+            originalTime: selectedTime,
+            newDate: response.appointment.date,
+            newTime: response.appointment.time
+          })
+        );
 
-      // Redireccionar a página de confirmación o dashboard
-      navigate("/dashboard/my-appointments", {
-        state: { appointmentSuccess: true, appointmentData: response },
+        // Mostrar un mensaje toast informando sobre la reprogramación
+        toast.warning(
+          "Tu cita fue reprogramada automáticamente debido a un conflicto de horario.",
+          { autoClose: 5000 }
+        );
+      } else {
+        // Si no hubo reprogramación, asegurarse de que el flag no esté en localStorage
+        localStorage.removeItem('appointmentRescheduled');
+        
+        // Mostrar mensaje de éxito estándar
+        toast.success("¡Tu cita ha sido agendada con éxito!");
+      }
+
+      // Redireccionar a página de confirmación con el estado apropiado
+      navigate("/dashboard/appointments/confirmation", {
+        state: { 
+          appointmentSuccess: true, 
+          appointmentData: response.appointment,
+          wasRescheduled: response.rescheduled
+        },
       });
 
       // Limpiar el estado
@@ -711,12 +748,21 @@ const AppointmentBookingPage = () => {
     } catch (error: any) {
       console.error("Error al crear cita:", error);
 
-      // Extraer mensaje de error del backend
-      const errorMessage =
-        error.response?.data?.message || "Error al crear la cita";
+      // MODIFICACIÓN: Manejar el error específico de conflicto (código 409)
+      if (error.response?.status === 409) {
+        setValidationError(
+          error.response.data.error || 
+          "El horario seleccionado ya ha sido reservado. Por favor, selecciona otro horario."
+        );
+      } else {
+        // Extraer mensaje de error del backend
+        const errorMessage =
+          error.response?.data?.message || "Error al crear la cita";
 
-      // Mostrar error específico
-      setValidationError(errorMessage);
+        // Mostrar error específico
+        setValidationError(errorMessage);
+      }
+      
       setShowConfirmModal(false);
     } finally {
       setIsSubmitting(false);
@@ -1107,6 +1153,7 @@ const AppointmentBookingPage = () => {
             </span>
           </div>
 
+          {/* MODIFICACIÓN: Botón actualizado para mostrar estado de carga */}
           <button
             onClick={handleSubmit}
             disabled={

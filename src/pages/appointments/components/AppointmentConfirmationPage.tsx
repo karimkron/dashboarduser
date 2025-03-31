@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Clock, Scissors, Check, ArrowLeft, Share2 } from 'lucide-react';
+import { Calendar, Clock, Scissors, Check, ArrowLeft, Share2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toast } from 'react-toastify';
@@ -9,17 +9,39 @@ const AppointmentConfirmationPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [appointment, setAppointment] = useState<any>(null);
+  // MODIFICACIÓN: Nuevo estado para controlar si la cita fue reprogramada
+  const [wasRescheduled, setWasRescheduled] = useState(false);
+  // MODIFICACIÓN: Nuevo estado para el proceso de compartir
+  const [isSharing, setIsSharing] = useState(false);
   
   useEffect(() => {
     // Verificar si hay datos de cita en el state
     if (location.state?.appointmentSuccess && location.state?.appointmentData) {
       setAppointment(location.state.appointmentData);
+      
+      // MODIFICACIÓN: Verificar si la cita fue reprogramada desde el state
+      if (location.state.wasRescheduled) {
+        setWasRescheduled(true);
+      }
     } else {
       // Intentar recuperar del localStorage como respaldo
       const savedAppointment = localStorage.getItem('lastConfirmedAppointment');
       if (savedAppointment) {
         try {
           setAppointment(JSON.parse(savedAppointment));
+          
+          // MODIFICACIÓN: Verificar si hay información de reprogramación en localStorage
+          const rescheduledInfo = localStorage.getItem('appointmentRescheduled');
+          if (rescheduledInfo) {
+            try {
+              const rescheduledData = JSON.parse(rescheduledInfo);
+              if (rescheduledData.wasRescheduled) {
+                setWasRescheduled(true);
+              }
+            } catch (error) {
+              console.error('Error parsing rescheduled info:', error);
+            }
+          }
         } catch (error) {
           console.error('Error parsing appointment data:', error);
           navigate('/dashboard');
@@ -41,18 +63,25 @@ const AppointmentConfirmationPage: React.FC = () => {
     // Limpiar localStorage después de 30 minutos
     const cleanupTimeout = setTimeout(() => {
       localStorage.removeItem('lastConfirmedAppointment');
+      localStorage.removeItem('appointmentRescheduled'); // También limpiar datos de reprogramación
     }, 30 * 60 * 1000);
     
     return () => clearTimeout(cleanupTimeout);
   }, [location, navigate]);
   
-  // Función para compartir la cita (podría ser por email, calendario, etc.)
+  // MODIFICACIÓN: Actualizada la función para compartir con estado de carga
   const handleShareAppointment = () => {
     if (!appointment) return;
     
-    // Implementar lógica de compartir
-    // Por simplicidad, aquí solo mostramos un toast
-    toast.info('Función de compartir aún no implementada');
+    // Mostrar indicador de carga
+    setIsSharing(true);
+    
+    // Simulación del proceso de compartir (podría ser una operación real en un caso de producción)
+    setTimeout(() => {
+      // Implementar lógica de compartir
+      toast.info('Función de compartir aún no implementada');
+      setIsSharing(false);
+    }, 1000);
     
     // En un caso real, podríamos:
     // 1. Generar un archivo .ics para calendario
@@ -89,6 +118,25 @@ const AppointmentConfirmationPage: React.FC = () => {
             </div>
           </div>
         </div>
+        
+        {/* MODIFICACIÓN: Banner de información de reprogramación */}
+        {wasRescheduled && (
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded-r-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <Clock className="h-6 w-6 text-amber-500" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-amber-800">
+                  Tu cita fue reprogramada automáticamente debido a un conflicto de horario.
+                </p>
+                <p className="text-xs text-amber-700 mt-1">
+                  El horario que solicitaste ya había sido reservado por otro cliente. Hemos asignado el siguiente horario disponible.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Tarjeta de confirmación */}
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -140,9 +188,12 @@ const AppointmentConfirmationPage: React.FC = () => {
               </div>
             </div>
             
-            {/* Instrucciones */}
+            {/* MODIFICACIÓN: Instrucciones adicionales sobre cambios de agenda */}
             <div className="bg-gray-50 p-4 rounded-lg mb-6">
-              <h3 className="font-semibold text-gray-700 mb-2">Recordatorio</h3>
+              <h3 className="font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+                Recordatorio
+              </h3>
               <ul className="text-gray-600 space-y-2 text-sm">
                 <li className="flex items-start gap-2">
                   <div className="h-5 w-5 text-amber-600 flex-shrink-0">•</div>
@@ -156,10 +207,16 @@ const AppointmentConfirmationPage: React.FC = () => {
                   <div className="h-5 w-5 text-amber-600 flex-shrink-0">•</div>
                   <span>Se ha enviado un correo de confirmación a tu dirección registrada.</span>
                 </li>
+                {wasRescheduled && (
+                  <li className="flex items-start gap-2">
+                    <div className="h-5 w-5 text-amber-600 flex-shrink-0">•</div>
+                    <span>Si el nuevo horario no te conviene, puedes cancelar esta cita y reservar una nueva.</span>
+                  </li>
+                )}
               </ul>
             </div>
             
-            {/* Botones de acción */}
+            {/* MODIFICACIÓN: Botones de acción actualizados para mostrar estado de carga */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={() => navigate('/dashboard')}
@@ -170,10 +227,20 @@ const AppointmentConfirmationPage: React.FC = () => {
               </button>
               <button
                 onClick={handleShareAppointment}
-                className="flex-1 py-3 px-4 flex justify-center items-center gap-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                disabled={isSharing}
+                className="flex-1 py-3 px-4 flex justify-center items-center gap-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
               >
-                <Share2 className="h-5 w-5" />
-                Añadir a Calendario
+                {isSharing ? (
+                  <>
+                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                    Procesando...
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-5 w-5" />
+                    Añadir a Calendario
+                  </>
+                )}
               </button>
             </div>
           </div>
