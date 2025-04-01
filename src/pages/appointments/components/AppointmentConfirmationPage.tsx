@@ -225,23 +225,33 @@ const AppointmentConfirmationPage: React.FC = () => {
                 <ArrowLeft className="h-5 w-5" />
                 Volver al Inicio
               </button>
-              <button
-                onClick={handleShareAppointment}
-                disabled={isSharing}
-                className="flex-1 py-3 px-4 flex justify-center items-center gap-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
-              >
-                {isSharing ? (
-                  <>
-                    <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
-                    Procesando...
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="h-5 w-5" />
-                    Añadir a Calendario
-                  </>
-                )}
-              </button>
+                <button
+                onClick={() => {
+                  if (!appointment) return;
+
+                  const appointmentDate = new Date(appointment.date);
+                  const startDate = new Date(
+                  appointmentDate.getFullYear(),
+                  appointmentDate.getMonth(),
+                  appointmentDate.getDate(),
+                  parseInt(appointment.time.split(':')[0]),
+                  parseInt(appointment.time.split(':')[1])
+                  );
+
+                  const endDate = new Date(startDate);
+                  endDate.setMinutes(startDate.getMinutes() + (appointment.totalDuration || 0));
+
+                  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Cita+en+la+peluquería&dates=${startDate.toISOString().replace(/-|:|\.\d+/g, '')}/${endDate.toISOString().replace(/-|:|\.\d+/g, '')}&details=Servicios:+${appointment.services
+                  .map((service: any) => service.name)
+                  .join(', ')}&location=Peluquería`;
+
+                  window.open(calendarUrl, '_blank');
+                }}
+                className="flex-1 py-3 px-4 flex justify-center items-center gap-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                >
+                <Share2 className="h-5 w-5" />
+                Añadir a Calendario
+                </button>
             </div>
           </div>
         </div>
