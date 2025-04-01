@@ -225,59 +225,129 @@ const AppointmentConfirmationPage: React.FC = () => {
                 <ArrowLeft className="h-5 w-5" />
                 Volver al Inicio
               </button>
-                <button
+              <button
                 onClick={() => {
-                  if (!appointment) return;
-
-                  const appointmentDate = new Date(appointment.date);
-                  const startDate = new Date(
-                  appointmentDate.getFullYear(),
-                  appointmentDate.getMonth(),
-                  appointmentDate.getDate(),
-                  parseInt(appointment.time.split(':')[0]),
-                  parseInt(appointment.time.split(':')[1])
-                  );
-
-                  const endDate = new Date(startDate);
-                  endDate.setMinutes(startDate.getMinutes() + (appointment.totalDuration || 0));
-
-                  const title = encodeURIComponent('Cita en la peluquería');
-                  const details = encodeURIComponent(
-                  `Servicios: ${appointment.services.map((service: any) => service.name).join(', ')}`
-                  );
-                  const location = encodeURIComponent('Peluquería');
-                  const startISO = startDate.toISOString().replace(/-|:|\.\d+/g, '');
-                  const endISO = endDate.toISOString().replace(/-|:|\.\d+/g, '');
-
-                  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                  const isAndroid = /Android/.test(navigator.userAgent);
-
-                  if (isIOS) {
-                  // Crear evento para iOS
-                  const iosUrl = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nSUMMARY:${title}\nDTSTART:${startISO}\nDTEND:${endISO}\nDESCRIPTION:${details}\nLOCATION:${location}\nEND:VEVENT\nEND:VCALENDAR`;
-                  const blob = new Blob([iosUrl], { type: 'text/calendar' });
-                  const url = URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = 'appointment.ics';
-                  document.body.appendChild(link);
-                  link.click();
-                  document.body.removeChild(link);
-                  } else if (isAndroid) {
-                  // Crear evento para Android (Google Calendar)
-                  const androidUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startISO}/${endISO}&details=${details}&location=${location}`;
-                  window.open(androidUrl, '_blank');
-                  } else {
-                  // Fallback para otros dispositivos (Google Calendar)
-                  const fallbackUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startISO}/${endISO}&details=${details}&location=${location}`;
-                  window.open(fallbackUrl, '_blank');
+                  try {
+                    if (!appointment) {
+                      console.error("No hay cita seleccionada");
+                      return;
+                    }
+                    
+                    const appointmentDate = new Date(appointment.date);
+                    if (isNaN(appointmentDate.getTime())) {
+                      console.error("Fecha de cita inválida");
+                      return;
+                    }
+                    
+                    const timeArr = appointment.time.split(':');
+                    if (timeArr.length !== 2) {
+                      console.error("Formato de hora inválido");
+                      return;
+                    }
+                    
+                    const hours = parseInt(timeArr[0]);
+                    const minutes = parseInt(timeArr[1]);
+                    
+                    if (isNaN(hours) || isNaN(minutes)) {
+                      console.error("Valores de hora/minutos inválidos");
+                      return;
+                    }
+                    
+                    const startDate = new Date(
+                      appointmentDate.getFullYear(),
+                      appointmentDate.getMonth(),
+                      appointmentDate.getDate(),
+                      hours,
+                      minutes
+                    );
+                    
+                    const endDate = new Date(startDate);
+                    const duration = appointment.totalDuration || 60;
+                    endDate.setMinutes(startDate.getMinutes() + duration);
+                    
+                    // Importante: Usamos los valores sin codificar para el contenido del archivo ICS
+                    const eventTitle = 'Cita en la peluquería';
+                    const servicesList = appointment.services?.map((service: any) => service.name).join(', ') || 'No especificados';
+                    const eventDetails = `Servicios: ${servicesList}`;
+                    const eventLocation = 'Peluquería';
+                    
+                    const startISO = startDate.toISOString().replace(/-|:|\.\d+/g, '');
+                    const endISO = endDate.toISOString().replace(/-|:|\.\d+/g, '');
+                    
+                    // Determinar plataforma
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                    const isAndroid = /Android/.test(navigator.userAgent);
+                    
+                    // Función para escapar caracteres especiales en el formato ICS
+                    // Los caracteres como comas, punto y coma, etc. necesitan ser escapados en ICS
+                    const escapeIcsValue = (value: string): string => {
+                      return value
+                        .replace(/\\/g, "\\\\")
+                        .replace(/;/g, "\\;")
+                        .replace(/,/g, "\\,")
+                        .replace(/\n/g, "\\n");
+                    };
+                    
+                    if (isIOS) {
+                      // Crear contenido ICS con caracteres correctamente escapados
+                      const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Peluquería//Reserva//ES
+BEGIN:VEVENT
+SUMMARY:${escapeIcsValue(eventTitle)}
+DTSTART:${startISO}
+DTEND:${endISO}
+DESCRIPTION:${escapeIcsValue(eventDetails)}
+LOCATION:${escapeIcsValue(eventLocation)}
+END:VEVENT
+END:VCALENDAR`;
+                      
+                      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+                      const url = URL.createObjectURL(blob);
+                      
+                      // Crear y usar un elemento <a> para descargar el archivo
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = 'cita_peluqueria.ics';
+                      document.body.appendChild(link);
+                      link.click();
+                      
+                      // Mensaje informativo para el usuario
+                      alert("Se ha descargado un archivo de calendario. Por favor, ábrelo para añadir la cita a tu calendario.");
+                      
+                      // Limpiar recursos
+                      setTimeout(() => {
+                        URL.revokeObjectURL(url);
+                        document.body.removeChild(link);
+                      }, 100);
+                    } else if (isAndroid) {
+                      // Para Android, usamos los valores codificados para la URL
+                      const encodedTitle = encodeURIComponent(eventTitle);
+                      const encodedDetails = encodeURIComponent(eventDetails);
+                      const encodedLocation = encodeURIComponent(eventLocation);
+                      
+                      // Crear evento para Android (Google Calendar)
+                      window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodedTitle}&dates=${startISO}/${endISO}&details=${encodedDetails}&location=${encodedLocation}`, '_blank');
+                    } else {
+                      // Fallback para otros dispositivos (Google Calendar) - también con valores codificados para URL
+                      const encodedTitle = encodeURIComponent(eventTitle);
+                      const encodedDetails = encodeURIComponent(eventDetails);
+                      const encodedLocation = encodeURIComponent(eventLocation);
+                      
+                      window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodedTitle}&dates=${startISO}/${endISO}&details=${encodedDetails}&location=${encodedLocation}`, '_blank');
+                    }
+                  } catch (error) {
+                    console.error("Error al crear evento de calendario:", error);
+                    alert("Se produjo un error al intentar añadir el evento al calendario. Por favor, inténtalo de nuevo.");
                   }
                 }}
-                className="flex-1 py-3 px-4 flex justify-center items-center gap-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
-                >
+                className="flex-1 py-3 px-4 flex justify-center items-center gap-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!appointment}
+                aria-label="Añadir cita al calendario"
+              >
                 <Share2 className="h-5 w-5" />
                 Añadir a Calendario
-                </button>
+              </button>
             </div>
           </div>
         </div>
