@@ -241,11 +241,41 @@ const AppointmentConfirmationPage: React.FC = () => {
                   const endDate = new Date(startDate);
                   endDate.setMinutes(startDate.getMinutes() + (appointment.totalDuration || 0));
 
-                  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=Cita+en+la+peluquería&dates=${startDate.toISOString().replace(/-|:|\.\d+/g, '')}/${endDate.toISOString().replace(/-|:|\.\d+/g, '')}&details=Servicios:+${appointment.services
-                  .map((service: any) => service.name)
-                  .join(', ')}&location=Peluquería`;
+                  const eventTitle = encodeURIComponent('Cita en la peluquería');
+                  const eventDetails = encodeURIComponent(
+                  `Servicios: ${appointment.services.map((service: any) => service.name).join(', ')}`
+                  );
+                  const eventLocation = encodeURIComponent('Peluquería');
+                  const startDateFormatted = startDate.toISOString().replace(/-|:|\.\d+/g, '');
+                  const endDateFormatted = endDate.toISOString().replace(/-|:|\.\d+/g, '');
 
-                  window.open(calendarUrl, '_blank');
+                  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+                  if (isiOS) {
+                  // Crear un enlace para el calendario de iOS
+                  const iosCalendarUrl = `BEGIN:VCALENDAR
+        VERSION:2.0
+        BEGIN:VEVENT
+        SUMMARY:${eventTitle}
+        DTSTART:${startDateFormatted}
+        DTEND:${endDateFormatted}
+        LOCATION:${eventLocation}
+        DESCRIPTION:${eventDetails}
+        END:VEVENT
+        END:VCALENDAR`;
+
+                  const blob = new Blob([iosCalendarUrl], { type: 'text/calendar' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'appointment.ics';
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  } else {
+                  // Redirigir a Google Calendar
+                  const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${startDateFormatted}/${endDateFormatted}&details=${eventDetails}&location=${eventLocation}`;
+                  window.open(googleCalendarUrl, '_blank');
+                  }
                 }}
                 className="flex-1 py-3 px-4 flex justify-center items-center gap-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
                 >
