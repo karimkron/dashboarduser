@@ -1,4 +1,3 @@
-// src/store/serviceStore.ts
 import { create } from 'zustand';
 import api from '../services/api';
 import { useAuthStore } from './auth.store';
@@ -9,7 +8,7 @@ export interface Service {
   description: string;
   price: number;
   duration: number;
-  category: string;
+  categories: string[]; // Cambiado de category a categories (array)
   image: string;
   points: number;
 }
@@ -38,9 +37,12 @@ export const useServiceStore = create<ServiceStore>((set, _get) => ({
       // Guardar servicios en localStorage con clave "services"
       localStorage.setItem('services', JSON.stringify(servicesData));
 
-      // Extraer categorías únicas a partir de los servicios
+      // Extraer categorías únicas a partir de los servicios (manejo para categorías múltiples)
       const uniqueCategories = Array.from(
-        new Set(servicesData.map(service => service.category))
+        new Set(servicesData.flatMap(service => 
+          // Manejar tanto string único como arrays de strings
+          Array.isArray(service.categories) ? service.categories : [service.categories]
+        ))
       ).map((category) => ({ id: category, name: category }));
 
       // Armar el array final de categorías (incluyendo la opción "Todos")

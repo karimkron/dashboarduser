@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal } from "react";
 import { Search, ChevronRight, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useServiceStore } from "../../store/serviceStore";
@@ -22,21 +22,25 @@ const ServicesPage = () => {
     }
     const normalizedQuery = searchQuery.toLowerCase().trim();
     const filtered = services.filter((service) => {
-      return (
-        service.name.toLowerCase().includes(normalizedQuery) ||
-        service.description.toLowerCase().includes(normalizedQuery) ||
-        service.category.toLowerCase().includes(normalizedQuery)
-      );
+      const nameMatch = service.name.toLowerCase().includes(normalizedQuery);
+      const descMatch = service.description.toLowerCase().includes(normalizedQuery);
+      const categoryMatch = Array.isArray(service.categories) 
+        ? service.categories.some(category => category.toLowerCase().includes(normalizedQuery))
+        : String(service.categories || '').toLowerCase().includes(normalizedQuery);
+      
+      return nameMatch || descMatch || categoryMatch;
     });
     setFilteredServices(filtered);
   }, [searchQuery, services]);
 
-  // Group services by category for mobile view
+  // Group services by category for mobile view (adaptado para categorías múltiples)
   const servicesByCategory = categories.reduce((acc, category) => {
     if (category.id === "all") return acc;
 
-    const categoryServices = filteredServices.filter(
-      (service) => service.category === category.id
+    const categoryServices = filteredServices.filter(service => 
+      Array.isArray(service.categories)
+        ? service.categories.includes(category.id)
+        : service.categories === category.id
     );
 
     if (categoryServices.length > 0) {
@@ -152,9 +156,22 @@ const ServicesPage = () => {
                     </div>
                   </div>
                   <div className="mt-2">
-                    <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
-                      {service.category}
-                    </span>
+                    {/* Mostrar las categorías como etiquetas, manejando tanto string como array */}
+                    {Array.isArray(service.categories) 
+                      ? service.categories.slice(0, 2).map((category: string | number | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | null | undefined, idx: Key | null | undefined) => (
+                          <span 
+                            key={idx} 
+                            className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full"
+                          >
+                            {category}
+                          </span>
+                        ))
+                      : service.categories && (
+                          <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
+                            {service.categories}
+                          </span>
+                        )
+                    }
                     <span className="inline-block bg-green-100 text-green-600 text-xs px-2 py-1 mr-1 mb-1 rounded-full">
                       Puntos: {service.points}
                     </span>
