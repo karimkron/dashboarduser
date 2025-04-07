@@ -862,18 +862,18 @@ const AppointmentBookingPage = () => {
 
             <div className="hidden md:flex items-center gap-2">
               <button
-                onClick={() => scrollDays("left")}
-                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700"
-                aria-label="Desplazar a la izquierda"
+          onClick={() => scrollDays("left")}
+          className="p-2 rounded-full bg-yellow-600 hover:bg-yellow-500 text-white"
+          aria-label="Desplazar a la izquierda"
               >
-                <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5" />
               </button>
               <button
-                onClick={() => scrollDays("right")}
-                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700"
-                aria-label="Desplazar a la derecha"
+          onClick={() => scrollDays("right")}
+          className="p-2 rounded-full bg-yellow-600 hover:bg-yellow-500 text-white"
+          aria-label="Desplazar a la derecha"
               >
-                <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-5 w-5" />
               </button>
             </div>
           </div>
@@ -892,63 +892,59 @@ const AppointmentBookingPage = () => {
               const isCurrentDay = isToday(date);
 
               return (
-                <div key={index} className="flex-shrink-0 first:ml-0">
-                  <button
-                    onClick={() => handleDateSelect(date)}
-                    disabled={!isOpen || isPastDate || !hasSlots}
-                    className={`w-20 h-24 rounded-xl text-center transition-colors flex flex-col items-center justify-center
-                      ${isSelected ? "bg-amber-600 text-white shadow-md" : ""}
-                      ${
-                        isCurrentDay && !isSelected
-                          ? "border-2 border-amber-500"
-                          : ""
-                      }
-                      ${
-                        isOpen && hasSlots && !isPastDate && !isSelected
-                          ? "bg-white hover:bg-gray-50 border border-gray-200"
-                          : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                      }
-                      ${
-                        isOpen && !hasSlots && !isPastDate
-                          ? "bg-red-50 text-red-400 cursor-not-allowed"
-                          : ""
-                      }
-                    `}
-                    title={
-                      !isOpen
-                        ? "Día no disponible"
-                        : !hasSlots && totalDuration > 0
-                        ? `No hay disponibilidad para servicios de ${totalDuration} min`
-                        : !hasSlots
-                        ? "No hay horarios disponibles"
-                        : isPastDate
-                        ? "Fecha en el pasado"
-                        : ""
-                    }
-                  >
-                    <span
-                      className={`text-xs uppercase ${
-                        isSelected ? "text-white" : "text-gray-500"
-                      } mb-1`}
-                    >
-                      {monthName}
-                    </span>
-                    <span
-                      className={`text-2xl font-bold ${
-                        isSelected ? "text-white" : ""
-                      }`}
-                    >
-                      {dayNumber}
-                    </span>
-                    <span
-                      className={`text-xs ${
-                        isSelected ? "text-white" : "text-gray-600"
-                      } mt-1`}
-                    >
-                      {dayName}
-                    </span>
-                  </button>
-                </div>
+          <div key={index} className="flex-shrink-0 first:ml-0">
+            <button
+              onClick={() => handleDateSelect(date)}
+              disabled={!isOpen || isPastDate || !hasSlots}
+              className={`w-20 h-24 rounded-xl text-center transition-colors flex flex-col items-center justify-center
+                ${
+            isSelected
+              ? "bg-green-600 text-white shadow-md"
+              : isOpen && hasSlots && !isPastDate
+              ? "bg-white border-2 border-orange-500 hover:bg-orange-50"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }
+                ${
+            isCurrentDay && !isSelected
+              ? "border-2 border-orange-500"
+              : ""
+                }
+              `}
+              title={
+                !isOpen
+            ? "Día no disponible"
+            : !hasSlots && totalDuration > 0
+            ? `No hay disponibilidad para servicios de ${totalDuration} min`
+            : !hasSlots
+            ? "No hay horarios disponibles"
+            : isPastDate
+            ? "Fecha en el pasado"
+            : ""
+              }
+            >
+              <span
+                className={`text-xs uppercase ${
+            isSelected ? "text-white" : "text-gray-500"
+                } mb-1`}
+              >
+                {monthName}
+              </span>
+              <span
+                className={`text-2xl font-bold ${
+            isSelected ? "text-white" : ""
+                }`}
+              >
+                {dayNumber}
+              </span>
+              <span
+                className={`text-xs ${
+            isSelected ? "text-white" : "text-gray-600"
+                } mt-1`}
+              >
+                {dayName}
+              </span>
+            </button>
+          </div>
               );
             })}
           </div>

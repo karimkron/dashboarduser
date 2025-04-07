@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Clock, ChevronLeft } from 'lucide-react';
+import { Clock, ChevronLeft, X } from 'lucide-react';
 import { useServiceStore } from '../../../store/serviceStore';
 import { useAppointmentStore } from '../../../store/appointment.store';
 
@@ -32,7 +32,7 @@ const ServiceDetailSkeleton = () => (
 const ServiceDetailPage = () => {
   const { serviceId } = useParams();
   const navigate = useNavigate();
-  const { services, fetchServices } = useServiceStore();
+  const { services, categories, fetchServices } = useServiceStore();
   const { addService } = useAppointmentStore();
   
   const [service, setService] = useState<any>(null);
@@ -40,6 +40,7 @@ const ServiceDetailPage = () => {
   const [otherCategoriesServices, setOtherCategoriesServices] = useState<{ [key: string]: any[] }>({});
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFullImage, setShowFullImage] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -75,36 +76,51 @@ const ServiceDetailPage = () => {
           throw new Error('Service not found');
         }
 
+        // Get service category or categories (handling both array and string)
+        const serviceCategories = Array.isArray(currentService.categories) 
+          ? currentService.categories 
+          : [currentService.category || 'Sin categoría'];
+
         // Prepare related services
         const sameCategory = services.length > 0 
-          ? services.filter(s => 
-              s.category === currentService.category && 
-              s._id !== currentService._id
-            )
+          ? services.filter(s => {
+              // Check if the service shares any category with current service
+              const sCategories = Array.isArray(s.categories) 
+                ? s.categories 
+                : [s.category || 'Sin categoría'];
+              return serviceCategories.some(cat => sCategories.includes(cat)) && s._id !== currentService._id;
+            })
           : (parsedStoredData?.sameCategoryServices || []);
 
-        const otherCategories = services.length > 0
-          ? services.filter(s => 
-              s.category !== currentService.category
-            ).reduce((acc: { [key: string]: any[] }, service) => {
-              if (!acc[service.category]) {
-                acc[service.category] = [];
+        // Create an object with services grouped by all available categories
+        const allCategoriesServices: { [key: string]: any[] } = {};
+        categories
+          .filter(cat => cat.id !== 'all')
+          .forEach(category => {
+            // Get services for this category
+            const categoryServices = services.filter(s => {
+              if (Array.isArray(s.categories)) {
+                return s.categories.includes(category.id) && s._id !== currentService._id;
+              } else {
+                return s.category === category.id && s._id !== currentService._id;
               }
-              acc[service.category].push(service);
-              return acc;
-            }, {})
-          : (parsedStoredData?.otherCategoriesServices || {});
+            });
+            
+            if (categoryServices.length > 0) {
+              allCategoriesServices[category.id] = categoryServices;
+            }
+          });
 
         // Update state
         setService(currentService);
         setSameCategoryServices(sameCategory);
-        setOtherCategoriesServices(otherCategories);
+        setOtherCategoriesServices(allCategoriesServices);
 
         // Store data for page reload
         localStorage.setItem('serviceDetailPageData', JSON.stringify({
           service: currentService,
           sameCategoryServices: sameCategory,
-          otherCategoriesServices: otherCategories
+          otherCategoriesServices: allCategoriesServices
         }));
         
         setIsLoading(false);
@@ -121,7 +137,7 @@ const ServiceDetailPage = () => {
     } else {
       loadData();
     }
-  }, [serviceId, services, navigate, fetchServices]);
+  }, [serviceId, services, navigate, fetchServices, categories]);
 
   const handleBack = () => {
     navigate(-1);
@@ -162,14 +178,34 @@ const ServiceDetailPage = () => {
     return <ServiceDetailSkeleton />;
   }
 
-  // Rest of the component remains the same as in the previous implementation
-  // (Full mobile and desktop view code)
+  // Get service categories
+  const serviceCategories = Array.isArray(service.categories) 
+    ? service.categories 
+    : [service.category || 'Sin categoría'];
+
   return (
-    <div className="pt-16 pb-20 md:pt-20 lg:pb-0 bg-gray-50 ">
-      {/* Existing code from previous implementation */}
+    <div className="pt-16 pb-20 md:pt-20 lg:pb-0 bg-gray-50">
+      {/* Show full image modal */}
+      {showFullImage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90 p-4">
+          <button
+            onClick={() => setShowFullImage(false)}
+            className="absolute top-4 left-4 text-white p-2 rounded-full bg-black bg-opacity-50 hover:bg-opacity-70 transition-colors"
+            aria-label="Close"
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img 
+            src={service.image || 'https://placehold.co/300x200'} 
+            alt={service.name}
+            className="max-h-[90vh] max-w-[90vw] object-contain"
+          />
+        </div>
+      )}
+
       <button 
         onClick={handleBack}
-        className="fixed top-3 left-4 z-50 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 md:hidden"
+        className="fixed top-3 left-4 z-40 p-2 bg-white rounded-full shadow-lg hover:bg-gray-50 md:hidden"
       >
         <ChevronLeft className="h-6 w-6 text-gray-600" />
       </button>
@@ -182,13 +218,19 @@ const ServiceDetailPage = () => {
           <p className="text-gray-600">{service.description}</p>
         </div>
 
-        {/* Imagen del servicio */}
-        <div className="relative pt-[70%] mb-4">
+        {/* Imagen del servicio (clickable) */}
+        <div 
+          className="relative pt-[70%] mb-4 cursor-pointer"
+          onClick={() => setShowFullImage(true)}
+        >
           <img 
             src={service.image || 'https://placehold.co/300x200'} 
             alt={service.name}
             className="absolute top-0 left-0 w-full h-full object-cover rounded-lg"
           />
+          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center transition-all duration-300">
+            <span className="opacity-0 hover:opacity-100 text-white font-medium">Ver imagen</span>
+          </div>
         </div>
         
         {/* Detalles del servicio */}
@@ -200,11 +242,19 @@ const ServiceDetailPage = () => {
               <span className="text-xs text-gray-600">{service.duration} min</span>
             </div>
           </div>
-          <div className="mb-3">
+          
+          {/* Categorías del servicio */}
+          <div className="mb-3 flex flex-wrap gap-2">
+            {serviceCategories.map((category: string, index: number) => (
+              <span key={index} className="inline-block bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full">
+                {category}
+              </span>
+            ))}
             <span className="inline-block bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full">
               Puntos: {service.points}
             </span>
           </div>
+          
           <button 
             onClick={handleBookService}
             className="w-full bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700"
@@ -213,95 +263,130 @@ const ServiceDetailPage = () => {
           </button>
         </div>
 
-        {/* Servicios relacionados */}
-        <div className="mt-6">
-          {sameCategoryServices.length > 0 && (
-            <>
-              <h2 className="text-xl font-bold mb-4">Misma categoría</h2>
-              <div className="flex overflow-x-auto pb-4 space-x-3 hide-scrollbar">
-                {sameCategoryServices.map(service => (
-                  <div 
-                    key={service._id}
-                    className="flex-shrink-0 w-48 bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer"
-                    onClick={() => handleServiceClick(service._id)}
-                  >
-                    <div className="relative pt-[100%]">
-                      <img
-                        src={service.image || 'https://placehold.co/300x200'}
-                        alt={service.name}
-                        className="absolute top-0 left-0 w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-gray-800 truncate">{service.name}</h3>
-                      <p className="text-sm text-gray-500 truncate mb-2">{service.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold">{service.price.toFixed(2)} €</span>
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 text-gray-400 mr-1" />
-                          <span className="text-xs">{service.duration}m</span>
-                        </div>
+        {/* Servicios de la misma categoría */}
+        {sameCategoryServices.length > 0 && (
+          <div className="mt-6">
+            <h2 className="text-xl font-bold mb-4">Misma categoría</h2>
+            <div className="flex overflow-x-auto pb-4 space-x-3 hide-scrollbar">
+              {sameCategoryServices.map(service => (
+                <div 
+                  key={service._id}
+                  className="flex-shrink-0 w-48 bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                  onClick={() => handleServiceClick(service._id)}
+                >
+                  <div className="relative pt-[100%]">
+                    <img
+                      src={service.image || 'https://placehold.co/300x200'}
+                      alt={service.name}
+                      className="absolute top-0 left-0 w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-medium text-gray-800 truncate">{service.name}</h3>
+                    <p className="text-sm text-gray-500 truncate mb-2">{service.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold">{service.price.toFixed(2)} €</span>
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 text-gray-400 mr-1" />
+                        <span className="text-xs">{service.duration}m</span>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {Object.entries(otherCategoriesServices).map(([category, services]) => (
-            <div key={category} className="mt-6">
-              <h2 className="text-xl font-bold mb-4">{category}</h2>
-              <div className="flex overflow-x-auto pb-4 space-x-3 hide-scrollbar">
-                {services.map(service => (
-                  <div
-                    key={service._id}
-                    className="flex-shrink-0 w-48 bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer"
-                    onClick={() => handleServiceClick(service._id)}
-                  >
-                    <div className="relative pt-[100%]">
-                      <img
-                        src={service.image || 'https://placehold.co/300x200'}
-                        alt={service.name}
-                        className="absolute top-0 left-0 w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-gray-800 truncate">{service.name}</h3>
-                      <p className="text-sm text-gray-500 truncate mb-2">{service.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold">{service.price.toFixed(2)} €</span>
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 text-gray-400 mr-1" />
-                          <span className="text-xs">{service.duration}m</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+        )}
+
+        {/* Todas las categorías de servicios */}
+        <div className="mt-6">
+          <h2 className="text-xl font-bold mb-4">Todas las categorías</h2>
+          <div className="flex overflow-x-auto pb-4 space-x-3 hide-scrollbar">
+            {categories
+              .filter(cat => cat.id !== 'all')
+              .map(category => (
+                <div 
+                  key={category.id}
+                  className={`flex-shrink-0 px-4 py-2 rounded-lg text-sm cursor-pointer transition-colors ${
+                    serviceCategories.includes(category.id) 
+                      ? 'bg-amber-600 text-white' 
+                      : 'bg-white text-gray-700 hover:bg-gray-100'
+                  }`}
+                  onClick={() => navigate(`/dashboard/services?category=${category.id}`)}
+                >
+                  {category.name}
+                </div>
+              ))}
+          </div>
         </div>
+
+        {/* Servicios por categoría */}
+        {Object.entries(otherCategoriesServices).map(([category, services]) => (
+          <div key={category} className="mt-6">
+            <h2 className="text-xl font-bold mb-4">{category}</h2>
+            <div className="flex overflow-x-auto pb-4 space-x-3 hide-scrollbar">
+              {services.map(service => (
+                <div
+                  key={service._id}
+                  className="flex-shrink-0 w-48 bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                  onClick={() => handleServiceClick(service._id)}
+                >
+                  <div className="relative pt-[100%]">
+                    <img
+                      src={service.image || 'https://placehold.co/300x200'}
+                      alt={service.name}
+                      className="absolute top-0 left-0 w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-medium text-gray-800 truncate">{service.name}</h3>
+                    <p className="text-sm text-gray-500 truncate mb-2">{service.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold">{service.price.toFixed(2)} €</span>
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 text-gray-400 mr-1" />
+                        <span className="text-xs">{service.duration}m</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Desktop View */}
       <div className="hidden md:block p-4">
-        {/* (Rest of the desktop view code remains the same as in previous implementation) */}
         <div className="flex gap-8">
           <div className="w-1/3">
-            <div className="relative pt-[80%] rounded-xl overflow-hidden shadow-lg">
+            <div 
+              className="relative pt-[80%] rounded-xl overflow-hidden shadow-lg cursor-pointer"
+              onClick={() => setShowFullImage(true)}
+            >
               <img 
                 src={service.image || 'https://placehold.co/300x200'} 
                 alt={service.name}
                 className="absolute top-0 left-0 w-full h-full object-cover"
               />
+              <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 flex items-center justify-center transition-all duration-300">
+                <span className="opacity-0 hover:opacity-100 text-white font-medium">Ver imagen completa</span>
+              </div>
             </div>
           </div>
           
           <div className="w-2/3">
             <h1 className="text-3xl font-bold mb-4">{service.name}</h1>
             <p className="text-gray-600 text-lg mb-6">{service.description}</p>
+            
+            {/* Categorías del servicio */}
+            <div className="mb-4 flex flex-wrap gap-2">
+              {serviceCategories.map((category: string, index: number) => (
+                <span key={index} className="inline-block bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-sm">
+                  {category}
+                </span>
+              ))}
+            </div>
             
             <div className="flex justify-between items-center mb-6">
               <span className="text-2xl font-bold text-gray-900">{service.price.toFixed(2)} €</span>
@@ -323,6 +408,28 @@ const ServiceDetailPage = () => {
             >
               Reservar cita
             </button>
+          </div>
+        </div>
+
+        {/* Todas las categorías */}
+        <div className="mt-8 bg-white p-4 rounded-lg">
+          <h2 className="text-xl font-medium mb-4">Categorías disponibles</h2>
+          <div className="flex flex-wrap gap-3">
+            {categories
+              .filter(cat => cat.id !== 'all')
+              .map(category => (
+                <div 
+                  key={category.id}
+                  className={`px-4 py-2 rounded-lg cursor-pointer transition-colors ${
+                    serviceCategories.includes(category.id) 
+                      ? 'bg-amber-600 text-white' 
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  onClick={() => navigate(`/dashboard/services?category=${category.id}`)}
+                >
+                  {category.name}
+                </div>
+              ))}
           </div>
         </div>
 
@@ -370,6 +477,7 @@ const ServiceDetailPage = () => {
             </>
           )}
 
+          {/* Servicios por categoría */}
           {Object.entries(otherCategoriesServices).map(([category, services]) => (
             <div key={category} className="mt-8">
               <h2 className="text-2xl font-bold mb-6">{category}</h2>

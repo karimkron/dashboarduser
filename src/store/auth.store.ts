@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { authService } from '../services/auth.service';
 import type { RegisterData, User } from '../services/auth.service';
+import api from '../services/api';
 
 interface AuthState {
   user: User | null;
@@ -9,6 +10,8 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (data: RegisterData) => Promise<void>;
+  forgotPassword: (email: string) => Promise<any>;
+  resetPassword: (code: string, newPassword: string) => Promise<any>; 
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -58,4 +61,47 @@ export const useAuthStore = create<AuthState>((set) => ({
       throw error;
     }
   },
+
+  // Implementación de la función forgotPassword que usa la ruta correcta del backend
+  forgotPassword: async (email: string) => {
+    try {
+      // Hacer la petición directamente a la ruta correcta del backend
+      const response = await api.post('/api/auth/forgot-password', { email });
+      
+      // Guardar el email para usarlo en el reseteo de contraseña
+      localStorage.setItem('resetEmail', JSON.stringify(email));
+      
+      return response.data;
+    } catch (error) {
+      console.error('Forgot password request failed:', error);
+      throw error;
+    }
+  },
+
+  resetPassword: async (code: string, newPassword: string) => {
+    try {
+      // Obtenemos el email del usuario desde el localStorage
+      const user = JSON.parse(localStorage.getItem('resetEmail') || '""');
+      const email = typeof user === 'string' ? user : '';
+      
+      if (!email) {
+        throw new Error('Email no encontrado para resetear contraseña');
+      }
+      
+      // Hacer la petición directamente a la ruta correcta del backend
+      const response = await api.post('/api/auth/reset-password', {
+        email,
+        code,
+        password: newPassword
+      });
+      
+      // Limpiamos el email almacenado para el reset
+      localStorage.removeItem('resetEmail');
+      
+      return response.data;
+    } catch (error) {
+      console.error('Reset password failed:', error);
+      throw error;
+    }
+  }
 }));

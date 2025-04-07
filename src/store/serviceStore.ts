@@ -3,6 +3,7 @@ import api from '../services/api';
 import { useAuthStore } from './auth.store';
 
 export interface Service {
+  [x: string]: any;
   _id: string;
   name: string;
   description: string;
